@@ -21,7 +21,7 @@ body{margin:0;font-family:Poppins;background:#fff;}
 
 .grid{display:grid;grid-template-columns:repeat(4,1fr);gap:30px;padding:50px 100px;}
 
-.card{border:1px solid #eee;padding:15px;text-align:center;cursor:pointer;transition:0.3s;}
+.card{border:1px solid #eee;padding:15px;text-align:center;cursor:pointer;transition:0.3s;position:relative;}
 .card img{width:100%;aspect-ratio:1/1;object-fit:cover;}
 .card:hover{transform:scale(1.05);}
 
@@ -46,42 +46,34 @@ body{margin:0;font-family:Poppins;background:#fff;}
 .popup-box{background:#fff;padding:35px 30px;width:100%;max-width:480px;border-radius:16px;text-align:left;position:relative;margin:auto;}
 .popup-box h2{font-family:Playfair Display;color:#D4AF37;text-align:center;margin-bottom:5px;}
 .popup-box p.subtitle{text-align:center;color:#888;font-size:13px;margin-bottom:20px;}
-
 .form-group{margin:12px 0;}
 .form-group label{display:block;font-size:13px;color:#555;margin-bottom:4px;font-weight:500;}
 .form-group input,.form-group textarea{width:100%;padding:11px 14px;border:1px solid #ddd;border-radius:8px;font-family:Poppins;font-size:14px;transition:border 0.2s;background:#fafafa;}
 .form-group input:focus,.form-group textarea:focus{outline:none;border-color:#D4AF37;background:#fff;}
 .form-group textarea{resize:vertical;min-height:75px;}
-
 .optional-tag{font-size:11px;color:#aaa;font-weight:400;margin-left:4px;}
-
 .colour-options{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px;}
 .colour-chip{padding:6px 14px;border-radius:20px;border:1px solid #ddd;font-size:12px;cursor:pointer;transition:0.2s;background:#fff;color:#555;}
 .colour-chip.selected{border-color:#D4AF37;background:#D4AF37;color:#fff;}
-
 .upload-area{border:2px dashed #D4AF37;border-radius:8px;padding:20px;text-align:center;cursor:pointer;background:#fffdf5;transition:0.2s;position:relative;}
 .upload-area:hover{background:#fff8e6;}
 .upload-area input[type="file"]{position:absolute;top:0;left:0;width:100%;height:100%;opacity:0;cursor:pointer;}
 .upload-area p{margin:0;font-size:13px;color:#D4AF37;}
 .upload-area span{font-size:11px;color:#aaa;display:block;margin-top:4px;}
-
 .upload-preview{margin-top:10px;display:none;align-items:center;gap:10px;padding:8px 12px;background:#f5f5f5;border-radius:6px;font-size:13px;color:#444;}
 .upload-preview img{width:40px;height:40px;object-fit:cover;border-radius:4px;}
-
 .url-divider{display:flex;align-items:center;gap:10px;margin:12px 0;font-size:12px;color:#aaa;}
 .url-divider::before,.url-divider::after{content:'';flex:1;height:1px;background:#eee;}
-
 .submit-btn{width:100%;padding:13px;background:#D4AF37;color:#fff;border:none;border-radius:8px;font-family:Poppins;font-size:15px;cursor:pointer;margin-top:20px;transition:0.2s;}
 .submit-btn:hover{background:#c09b28;}
 .submit-btn:disabled{background:#ccc;cursor:not-allowed;}
-
 .close-btn{position:absolute;top:14px;right:16px;font-size:20px;cursor:pointer;color:#aaa;background:none;border:none;line-height:1;}
 .close-btn:hover{color:#333;}
-
 .status-msg{margin-top:12px;padding:10px;border-radius:6px;font-size:13px;text-align:center;display:none;}
 .status-msg.success{background:#e8f9ee;color:#1a7a3a;display:block;}
 .status-msg.error{background:#fdecea;color:#c0392b;display:block;}
 
+/* SHIMMER & MARQUEE */
 .shimmer-text{background:linear-gradient(90deg,#b8860b 0%,#FFD700 40%,#fff8dc 60%,#b8860b 100%);background-size:200% auto;-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;animation:shimmer 3s linear infinite;font-family:Playfair Display;font-size:42px;margin:0;}
 @keyframes shimmer{0%{background-position:200% center;}100%{background-position:-200% center;}}
 .marquee-wrap{overflow:hidden;background:linear-gradient(135deg,#1a1a1a 0%,#2d2200 50%,#1a1a1a 100%);padding:18px 0;border-top:1px solid #D4AF37;border-bottom:1px solid #D4AF37;}
@@ -89,80 +81,32 @@ body{margin:0;font-family:Poppins;background:#fff;}
 .marquee-track span{color:#D4AF37;font-size:14px;letter-spacing:3px;text-transform:uppercase;}
 .marquee-track span.dot{color:#fff8dc;font-size:18px;}
 @keyframes marquee{0%{transform:translateX(0);}100%{transform:translateX(-50%);}}
+
+/* TRUST BAR */
 .trust-bar{display:flex;justify-content:center;gap:40px;padding:25px 50px;background:#fffdf5;border-top:1px solid #f0e8d0;border-bottom:1px solid #f0e8d0;flex-wrap:wrap;}
 .trust-badge{display:flex;align-items:center;gap:10px;}
 .trust-badge .icon{width:38px;height:38px;background:#D4AF37;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;}
 .trust-badge strong{display:block;color:#222;font-size:13px;}
 .trust-badge span{font-size:11px;color:#888;}
-.card{position:relative;}
 
-
-
-
-
-.sold-out-badge{
-  position:absolute;top:10px;left:10px;
-  background:#e74c3c;color:#fff;
-  font-size:11px;font-weight:600;
-  padding:4px 10px;border-radius:20px;
-  letter-spacing:1px;z-index:10;
-}
+/* SOLD OUT */
+.sold-out-badge{position:absolute;top:10px;left:10px;background:#e74c3c;color:#fff;font-size:11px;font-weight:600;padding:4px 10px;border-radius:20px;letter-spacing:1px;z-index:10;}
 .card.sold-out img{opacity:0.5;filter:grayscale(60%);}
-.card.sold-out .btn-sold{
-  width:100%;padding:9px;
-  background:#e74c3c;color:#fff;
-  border:none;border-radius:6px;
-  font-family:Poppins;font-size:13px;
-  cursor:pointer;margin-top:6px;
-  transition:0.2s;
-}
+.card.sold-out .btn-sold{width:100%;padding:9px;background:#e74c3c;color:#fff;border:none;border-radius:6px;font-family:Poppins;font-size:13px;cursor:pointer;margin-top:6px;transition:0.2s;}
 .card.sold-out .btn-sold:hover{background:#c0392b;}
 
 /* NOTIFY POPUP */
-.notify-overlay{
-  display:none;position:fixed;
-  top:0;left:0;width:100%;height:100%;
-  background:rgba(0,0,0,0.6);
-  z-index:2000;justify-content:center;align-items:center;
-}
-.notify-box{
-  background:#fff;padding:30px;
-  width:100%;max-width:380px;
-  border-radius:16px;text-align:center;
-  position:relative;
-}
-.notify-box h3{
-  font-family:Playfair Display;
-  color:#D4AF37;margin-bottom:5px;
-}
+.notify-overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.6);z-index:2000;justify-content:center;align-items:center;}
+.notify-box{background:#fff;padding:30px;width:100%;max-width:380px;border-radius:16px;text-align:center;position:relative;}
+.notify-box h3{font-family:Playfair Display;color:#D4AF37;margin-bottom:5px;}
 .notify-box p{font-size:13px;color:#888;margin-bottom:15px;}
-.notify-box input{
-  width:100%;padding:11px 14px;
-  border:1px solid #ddd;border-radius:8px;
-  font-family:Poppins;font-size:14px;
-  margin:6px 0;box-sizing:border-box;
-}
+.notify-box input{width:100%;padding:11px 14px;border:1px solid #ddd;border-radius:8px;font-family:Poppins;font-size:14px;margin:6px 0;box-sizing:border-box;}
 .notify-box input:focus{outline:none;border-color:#D4AF37;}
-.notify-submit{
-  width:100%;padding:12px;
-  background:#D4AF37;color:#fff;
-  border:none;border-radius:8px;
-  font-family:Poppins;font-size:14px;
-  cursor:pointer;margin-top:10px;
-}
+.notify-submit{width:100%;padding:12px;background:#D4AF37;color:#fff;border:none;border-radius:8px;font-family:Poppins;font-size:14px;cursor:pointer;margin-top:10px;}
 .notify-submit:hover{background:#c09b28;}
-.notify-close{
-  position:absolute;top:12px;right:16px;
-  background:none;border:none;font-size:20px;
-  cursor:pointer;color:#aaa;
-}
+.notify-close{position:absolute;top:12px;right:16px;background:none;border:none;font-size:20px;cursor:pointer;color:#aaa;}
 .notify-close:hover{color:#333;}
-.notify-success{
-  background:#e8f9ee;color:#1a7a3a;
-  border-radius:8px;padding:10px;
-  font-size:13px;margin-top:10px;
-  display:none;
-}
+.notify-success{background:#e8f9ee;color:#1a7a3a;border-radius:8px;padding:10px;font-size:13px;margin-top:10px;display:none;}
 </style>
 
 <script>
@@ -189,28 +133,28 @@ function updateCart(){
 }
 
 function openCategory(name){
-  let top=`<div style="display:flex;justify-content:space-between;padding:20px 100px;"><button onclick="showPage('shop')">⬅ Back</button>${name==="Bangles"?`<button class="btn" onclick="openCustomize()">✨ Customize</button>`:""}</div>`;
+  let top=`<div style="display:flex;justify-content:space-between;padding:20px 100px;"><button onclick="showPage('shop')">&#8592; Back</button>${name==="Bangles"?`<button class="btn" onclick="openCustomize()">&#10024; Customize</button>`:""}</div>`;
   let content=top+`<h1 style="text-align:center;">${name}</h1><div class="grid">`;
   if(name==="Chains"){content+=`
-    <div class="card"><img src="chain1.jpeg"><p>Flower Chain</p><p>₹399</p><button class="btn" onclick="addToCart('Flower Chain',399,'chain1.jpeg')">ADD</button></div>
-    <div class="card"><img src="chain2.jpg"><p>Bow Heart Chain</p><p>₹499</p><button class="btn" onclick="addToCart('Bow Heart Chain',499,'chain2.jpg')">ADD</button></div>
-    <div class="card"><img src="chain3.jpeg"><p>Pearl Flower Chain</p><p>₹449</p><button class="btn" onclick="addToCart('Pearl Flower Chain',449,'chain3.jpeg')">ADD</button></div>
-    <div class="card"><img src="chain4.jpeg"><p>Snowflake Chain</p><p>₹379</p><button class="btn" onclick="addToCart('Snowflake Chain',379,'chain4.jpeg')">ADD</button></div>
-    <div class="card"><img src="chain5.jpeg"><p>Crystal Charm Chain</p><p>₹549</p><button class="btn" onclick="addToCart('Crystal Charm Chain',549,'chain5.jpeg')">ADD</button></div>
-    <div class="card"><img src="chain6.jpeg"><p>Teardrop Chain</p><p>₹429</p><button class="btn" onclick="addToCart('Teardrop Chain',429,'chain6.jpeg')">ADD</button></div>
-    <div class="card"><img src="chain7.jpeg"><p>Rectangle Charm Chain</p><p>₹459</p><button class="btn" onclick="addToCart('Rectangle Charm Chain',459,'chain7.jpeg')">ADD</button></div>
-    <div class="card"><img src="chain8.jpeg"><p>Heart Pendant Chain</p><p>₹499</p><button class="btn" onclick="addToCart('Heart Pendant Chain',499,'chain8.jpeg')">ADD</button></div>
-    <div class="card"><img src="chain9.jpeg"><p>Multi Heart Chain</p><p>₹529</p><button class="btn" onclick="addToCart('Multi Heart Chain',529,'chain9.jpeg')">ADD</button></div>
-<div class="card"><img src="chain10.jpeg"><p>Circle Pendant Chain</p><p>₹389</p><button class="btn" onclick="addToCart('Circle Pendant Chain',389,'chain10.jpeg')">ADD</button></div>
-      `;}
-  if(name==="Bracelets"){content+=`<div class="card"><img src="braceletdisplay.jpeg"><p>₹399</p><button class="btn" onclick="addToCart('Bracelet1',399,'braceletdisplay.jpeg')">ADD</button></div>`;}
-  if(name==="Earrings"){content+=`<div class="card"><img src="earringsdisplay.jpeg"><p>₹299</p><button class="btn" onclick="addToCart('Earring1',299,'earringsdisplay.jpeg')">ADD</button></div>`;}
+    <div class="card"><img src="chain1.jpeg"><p>Flower Chain</p><p>&#8377;399</p><button class="btn" onclick="addToCart('Flower Chain',399,'chain1.jpeg')">ADD</button></div>
+    <div class="card"><img src="chain2.jpg"><p>Bow Heart Chain</p><p>&#8377;499</p><button class="btn" onclick="addToCart('Bow Heart Chain',499,'chain2.jpg')">ADD</button></div>
+    <div class="card"><img src="chain3.jpeg"><p>Pearl Flower Chain</p><p>&#8377;449</p><button class="btn" onclick="addToCart('Pearl Flower Chain',449,'chain3.jpeg')">ADD</button></div>
+    <div class="card"><img src="chain4.jpeg"><p>Snowflake Chain</p><p>&#8377;379</p><button class="btn" onclick="addToCart('Snowflake Chain',379,'chain4.jpeg')">ADD</button></div>
+    <div class="card"><img src="chain5.jpeg"><p>Crystal Charm Chain</p><p>&#8377;549</p><button class="btn" onclick="addToCart('Crystal Charm Chain',549,'chain5.jpeg')">ADD</button></div>
+    <div class="card"><img src="chain6.jpeg"><p>Teardrop Chain</p><p>&#8377;429</p><button class="btn" onclick="addToCart('Teardrop Chain',429,'chain6.jpeg')">ADD</button></div>
+    <div class="card"><img src="chain7.jpeg"><p>Rectangle Charm Chain</p><p>&#8377;459</p><button class="btn" onclick="addToCart('Rectangle Charm Chain',459,'chain7.jpeg')">ADD</button></div>
+    <div class="card"><img src="chain8.jpeg"><p>Heart Pendant Chain</p><p>&#8377;499</p><button class="btn" onclick="addToCart('Heart Pendant Chain',499,'chain8.jpeg')">ADD</button></div>
+    <div class="card"><img src="chain9.jpeg"><p>Multi Heart Chain</p><p>&#8377;529</p><button class="btn" onclick="addToCart('Multi Heart Chain',529,'chain9.jpeg')">ADD</button></div>
+    <div class="card"><img src="chain10.jpeg"><p>Circle Pendant Chain</p><p>&#8377;389</p><button class="btn" onclick="addToCart('Circle Pendant Chain',389,'chain10.jpeg')">ADD</button></div>
+  `;}
+  if(name==="Bracelets"){content+=`<div class="card"><img src="braceletdisplay.jpeg"><p>&#8377;399</p><button class="btn" onclick="addToCart('Bracelet1',399,'braceletdisplay.jpeg')">ADD</button></div>`;}
+  if(name==="Earrings"){content+=`<div class="card"><img src="earringsdisplay.jpeg"><p>&#8377;299</p><button class="btn" onclick="addToCart('Earring1',299,'earringsdisplay.jpeg')">ADD</button></div>`;}
   if(name==="Bangles"){content+=`
-    <div class="card"><img src="bangles1.jpeg"><p>Gold Stone Bangles</p><p>₹599</p><button class="btn" onclick="addToCart('Gold Stone Bangles',599,'bangles1.jpeg')">ADD</button></div>
-    <div class="card"><img src="bangles2.jpeg"><p>Yellow Red Silk Bangles</p><p>₹699</p><button class="btn" onclick="addToCart('Yellow Red Silk Bangles',699,'bangles2.jpeg')">ADD</button></div>
-    <div class="card"><img src="bangles3.jpeg"><p>Multicolour Stone Bangles</p><p>₹649</p><button class="btn" onclick="addToCart('Multicolour Stone Bangles',649,'bangles3.jpeg')">ADD</button></div>
-    <div class="card"><img src="bangles4.jpeg"><p>Green Silk Bangles</p><p>₹749</p><button class="btn" onclick="addToCart('Green Silk Bangles',749,'bangles4.jpeg')">ADD</button></div>
-    <div class="card"><img src="bangles5.jpeg"><p>Pink Green Bangles</p><p>₹799</p><button class="btn" onclick="addToCart('Pink Green Bangles',799,'bangles5.jpeg')">ADD</button></div>
+    <div class="card"><img src="bangles1.jpeg"><p>Gold Stone Bangles</p><p>&#8377;599</p><button class="btn" onclick="addToCart('Gold Stone Bangles',599,'bangles1.jpeg')">ADD</button></div>
+    <div class="card"><img src="bangles2.jpeg"><p>Yellow Red Silk Bangles</p><p>&#8377;699</p><button class="btn" onclick="addToCart('Yellow Red Silk Bangles',699,'bangles2.jpeg')">ADD</button></div>
+    <div class="card"><img src="bangles3.jpeg"><p>Multicolour Stone Bangles</p><p>&#8377;649</p><button class="btn" onclick="addToCart('Multicolour Stone Bangles',649,'bangles3.jpeg')">ADD</button></div>
+    <div class="card"><img src="bangles4.jpeg"><p>Green Silk Bangles</p><p>&#8377;749</p><button class="btn" onclick="addToCart('Green Silk Bangles',749,'bangles4.jpeg')">ADD</button></div>
+    <div class="card"><img src="bangles5.jpeg"><p>Pink Green Bangles</p><p>&#8377;799</p><button class="btn" onclick="addToCart('Pink Green Bangles',799,'bangles5.jpeg')">ADD</button></div>
   `;}
   content+=`</div>`;
   document.getElementById("products").innerHTML=content;
@@ -221,9 +165,9 @@ function showCart(){
   let html="";let total=0;
   cart.forEach((i,index)=>{
     total+=i.price*i.qty;
-    html+=`<div class="cart-item"><img src="${i.image}" width="60"><p>${i.name}</p><div><button onclick="decreaseQty(${index})">➖</button><span style="margin:0 10px;">${i.qty}</span><button onclick="increaseQty(${index})">➕</button></div><p>₹${i.price*i.qty}</p></div>`;
+    html+=`<div class="cart-item"><img src="${i.image}" width="60"><p>${i.name}</p><div><button onclick="decreaseQty(${index})">&#10134;</button><span style="margin:0 10px;">${i.qty}</span><button onclick="increaseQty(${index})">&#10133;</button></div><p>&#8377;${i.price*i.qty}</p></div>`;
   });
-  html+=`<h3>Total ₹${total}</h3><button class="btn" onclick="showPage('checkout')">Proceed to Checkout</button>`;
+  html+=`<h3>Total &#8377;${total}</h3><button class="btn" onclick="showPage('checkout')">Proceed to Checkout</button>`;
   document.getElementById("cartItems").innerHTML=html;
   showPage("cartPage");
 }
@@ -237,42 +181,51 @@ function proceedToUPI(){
   let address=document.querySelector("input[placeholder='Address']").value.trim();
   let city=document.querySelector("input[placeholder='City']").value.trim();
   let pincode=document.querySelector("input[placeholder='Pincode']").value.trim();
-  if(!name||!phone||!address||!city||!pincode){alert("⚠️ Please fill all details");return;}
+  if(!name||!phone||!address||!city||!pincode){alert("Please fill all details");return;}
   let total=cart.reduce((s,i)=>s+(i.price*i.qty),0);
   currentOrderDetails={name,phone,address,city,pincode,total};
-  const UPI_ID="yourupiid@upi";
-  const upiLink=`upi://pay?pa=${UPI_ID}&pn=AH+Collections&am=${total}&cu=INR`;
-  document.getElementById("upiAmount").innerText=`₹${total}`;
-  // QR image is static from your PhonePe scanner
+  document.getElementById("upiAmount").innerText="&#8377;"+total;
   showPage("upiPage");
 }
 
 function confirmOrder(){
   let txnId=document.getElementById("txnInput").value.trim();
-  if(!txnId){alert("⚠️ Please enter your UPI Transaction ID");return;}
-  let msg="🛍️ *New Order - UPI Payment*%0A%0A";
-  msg+=`Name: ${currentOrderDetails.name}%0APhone: ${currentOrderDetails.phone}%0AAddress: ${currentOrderDetails.address}, ${currentOrderDetails.city} - ${currentOrderDetails.pincode}%0A%0AOrder:%0A`;
-  cart.forEach(i=>{msg+=`- ${i.name} x ${i.qty} = ₹${i.price*i.qty}%0A`;});
-  msg+=`%0ATotal: ₹${currentOrderDetails.total}%0AUPI Txn ID: ${txnId}`;
+  if(!txnId){alert("Please enter your UPI Transaction ID");return;}
+  let msg="New Order - UPI Payment%0A%0A";
+  msg+="Name: "+currentOrderDetails.name+"%0APhone: "+currentOrderDetails.phone+"%0AAddress: "+currentOrderDetails.address+", "+currentOrderDetails.city+" - "+currentOrderDetails.pincode+"%0A%0AOrder:%0A";
+  cart.forEach(i=>{msg+="- "+i.name+" x "+i.qty+" = &#8377;"+i.price*i.qty+"%0A";});
+  msg+="%0ATotal: &#8377;"+currentOrderDetails.total+"%0AUPI Txn ID: "+txnId;
   cart=[];updateCart();
-  document.getElementById("successMsg").innerHTML=`<div class="success-box">✅ <strong>Order Confirmed!</strong><br><br>Thank you, <strong>${currentOrderDetails.name}</strong>!<br>Your order worth <strong>₹${currentOrderDetails.total}</strong> has been placed.<br><br>📦 We will process your order shortly.<br>UPI Txn ID: <strong>${txnId}</strong></div><br><button class="btn" onclick="notifySeller('${msg}')">📲 Notify Seller on WhatsApp</button><br><br><button class="btn" onclick="showPage('home')">Continue Shopping</button>`;
+  document.getElementById("successMsg").innerHTML='<div class="success-box">&#10003; <strong>Order Confirmed!</strong><br><br>Thank you, <strong>'+currentOrderDetails.name+'</strong>!<br>Your order worth <strong>&#8377;'+currentOrderDetails.total+'</strong> has been placed.<br><br>We will process your order shortly.<br>UPI Txn ID: <strong>'+txnId+'</strong></div><br><button class="btn" onclick="notifySeller(\''+msg+'\')">Notify Seller on WhatsApp</button><br><br><button class="btn" onclick="showPage(\'home\')">Continue Shopping</button>';
   showPage("successPage");
 }
 
 function notifySeller(msg){window.open("https://wa.me/918885580886?text="+msg);}
+
+function openUpiApp(app){
+  const total=currentOrderDetails.total||0;
+  const upiId='yourupiid@upi';
+  const note='AHCollections+Order';
+  const name='AH+Collections';
+  let url='';
+  if(app==='gpay'){url='gpay://upi/pay?pa='+upiId+'&pn='+name+'&am='+total+'&cu=INR&tn='+note;}
+  else if(app==='phonepe'){url='phonepe://pay?pa='+upiId+'&pn='+name+'&am='+total+'&cu=INR&tn='+note;}
+  else if(app==='paytm'){url='paytmmp://pay?pa='+upiId+'&pn='+name+'&am='+total+'&cu=INR&tn='+note;}
+  else if(app==='bhim'){url='upi://pay?pa='+upiId+'&pn='+name+'&am='+total+'&cu=INR&tn='+note;}
+  window.location.href=url;
+  setTimeout(function(){alert('Could not open '+app.toUpperCase()+'. Please scan the QR code above.');},1500);
+}
 
 /* CUSTOMIZE */
 function openCustomize(){
   document.getElementById("customizePopup").style.display="flex";
   document.body.style.overflow="hidden";
 }
-
 function closeCustomize(){
   document.getElementById("customizePopup").style.display="none";
   document.body.style.overflow="auto";
   resetForm();
 }
-
 function resetForm(){
   ["cName","cPhone","cSpecs","cImageUrl"].forEach(id=>document.getElementById(id).value="");
   document.getElementById("statusMsg").className="status-msg";
@@ -281,100 +234,62 @@ function resetForm(){
   document.querySelectorAll(".colour-chip").forEach(c=>c.classList.remove("selected"));
   document.getElementById("uploadPreview").style.display="none";
   const btn=document.getElementById("submitBtn");
-  btn.disabled=false;btn.innerText="Submit Request ✨";
+  btn.disabled=false;btn.innerText="Submit Request";
 }
-
 function selectColour(el,colour){
   document.querySelectorAll(".colour-chip").forEach(c=>c.classList.remove("selected"));
   el.classList.add("selected");
   selectedColour=colour;
 }
-
 function handleFileUpload(input){
   const file=input.files[0];
   if(!file)return;
-  if(file.size>5*1024*1024){alert("⚠️ Image must be under 5MB");return;}
+  if(file.size>5*1024*1024){alert("Image must be under 5MB");return;}
   uploadedFileName=file.name;
   const reader=new FileReader();
   reader.onload=function(e){
     uploadedFileBase64=e.target.result;
     const preview=document.getElementById("uploadPreview");
     preview.style.display="flex";
-    preview.innerHTML=`<img src="${uploadedFileBase64}"><span>📎 ${file.name}</span>`;
+    preview.innerHTML='<img src="'+uploadedFileBase64+'"><span>'+file.name+'</span>';
   };
   reader.readAsDataURL(file);
 }
-
 function sendCustomize(){
   const name=document.getElementById("cName").value.trim();
   const phone=document.getElementById("cPhone").value.trim();
   const specs=document.getElementById("cSpecs").value.trim();
   const imageUrl=document.getElementById("cImageUrl").value.trim();
-
-  if(!name||!phone){alert("⚠️ Please fill Name and Phone number");return;}
-  if(!selectedColour){alert("⚠️ Please select a preferred colour");return;}
-
+  if(!name||!phone){alert("Please fill Name and Phone number");return;}
+  if(!selectedColour){alert("Please select a preferred colour");return;}
   const btn=document.getElementById("submitBtn");
   btn.disabled=true;btn.innerText="Sending...";
-
   let designImage="Not provided";
   if(imageUrl){designImage=imageUrl;}
-  else if(uploadedFileBase64){designImage="Image uploaded from gallery. File name: "+uploadedFileName;}
-
+  else if(uploadedFileBase64){designImage="Image uploaded from gallery. File: "+uploadedFileName;}
   emailjs.send("service_123456","template_8f7s1ep",{
-    customer_name:name,
-    name:name,
-    phone:phone,
-    colour:selectedColour,
-    specs:specs||"None",
-    design_image:designImage,
+    customer_name:name,name:name,phone:phone,colour:selectedColour,
+    specs:specs||"None",design_image:designImage,
     message:"Name: "+name+"\nPhone: "+phone+"\nColour: "+selectedColour+"\nSpecs: "+(specs||"None")+"\nDesign: "+designImage,
-    email:"ahcollections355@gmail.com",
-    title:"Bangle Customization Request"
+    email:"ahcollections355@gmail.com",title:"Bangle Customization Request"
   })
-  .then(function(response){
-    console.log("SUCCESS",response);
+  .then(function(){
     const msg=document.getElementById("statusMsg");
     msg.className="status-msg success";
-    msg.innerText="✅ Your request has been sent! We'll contact you soon.";
-    btn.innerText="Sent ✅";
+    msg.innerText="Your request has been sent! We will contact you soon.";
+    btn.innerText="Sent";
     setTimeout(()=>closeCustomize(),2500);
   })
   .catch(function(err){
-    console.error("EMAILJS ERROR:",JSON.stringify(err));
     const msg=document.getElementById("statusMsg");
     msg.className="status-msg error";
-    msg.innerText="❌ Error: "+( err.text || err.message || JSON.stringify(err));
-    btn.disabled=false;btn.innerText="Submit Request ✨";
+    msg.innerText="Failed to send. Error: "+(err.text||err.message||JSON.stringify(err));
+    btn.disabled=false;btn.innerText="Submit Request";
   });
 }
 
-
-
-function openUpiApp(app){
-  const total=currentOrderDetails.total||0;
-  const upiId='yourupiid@upi'; // REPLACE WITH YOUR UPI ID
-  const note='AHCollections+Order';
-  const name='AH+Collections';
-  let url='';
-  if(app==='gpay'){
-    url='gpay://upi/pay?pa='+upiId+'&pn='+name+'&am='+total+'&cu=INR&tn='+note;
-  } else if(app==='phonepe'){
-    url='phonepe://pay?pa='+upiId+'&pn='+name+'&am='+total+'&cu=INR&tn='+note;
-  } else if(app==='paytm'){
-    url='paytmmp://pay?pa='+upiId+'&pn='+name+'&am='+total+'&cu=INR&tn='+note;
-  } else if(app==='bhim'){
-    url='upi://pay?pa='+upiId+'&pn='+name+'&am='+total+'&cu=INR&tn='+note;
-  }
-  window.location.href=url;
-  // fallback after 1.5s if app not installed
-  setTimeout(function(){
-    alert('Could not open '+app.toUpperCase()+'. Please scan the QR code above or use another UPI app.');
-  },1500);
-}
-
+/* NOTIFY ME */
 let currentNotifyProduct='';
-
 function openNotify(productName){
   currentNotifyProduct=productName;
   document.getElementById('notifyProduct').innerText=productName;
@@ -384,36 +299,33 @@ function openNotify(productName){
   document.getElementById('notifyOverlay').style.display='flex';
   document.body.style.overflow='hidden';
 }
-
 function closeNotify(){
   document.getElementById('notifyOverlay').style.display='none';
   document.body.style.overflow='auto';
 }
-
 function submitNotify(){
   const name=document.getElementById('notifyName').value.trim();
   const phone=document.getElementById('notifyPhone').value.trim();
   if(!name||!phone){alert('Please fill your name and phone number');return;}
-  const msg='Restock+Alert+Request%0A%0AProduct:+'+encodeURIComponent(currentNotifyProduct)+'%0ACustomer+Name:+'+encodeURIComponent(name)+'%0APhone:+'+encodeURIComponent(phone)+'%0A%0APlease+notify+when+back+in+stock!';
+  const msg='Restock+Alert%0A%0AProduct:+'+encodeURIComponent(currentNotifyProduct)+'%0AName:+'+encodeURIComponent(name)+'%0APhone:+'+encodeURIComponent(phone);
   document.getElementById('notifySuccessMsg').style.display='block';
-  setTimeout(function(){
-    closeNotify();
-    window.open('https://wa.me/918885580886?text='+msg);
-  },1200);
+  setTimeout(function(){closeNotify();window.open('https://wa.me/918885580886?text='+msg);},1200);
 }
 </script>
 </head>
 <body>
 
+<!-- NAV -->
 <div class="nav">
   <div class="logo">AH COLLECTIONS</div>
   <div>
     <a onclick="showPage('home')">Home</a>
     <a onclick="showPage('shop')">Shop</a>
-    <a onclick="showCart()">Cart 🛒 (<span id="cartCount">0</span>)</a>
+    <a onclick="showCart()">Cart &#128722; (<span id="cartCount">0</span>)</a>
   </div>
 </div>
 
+<!-- HOME -->
 <div id="home">
   <div class="hero">
     <img src="logo1.png" style="width:400px;">
@@ -423,14 +335,27 @@ function submitNotify(){
       <button class="btn" onclick="showPage('shop')">Shop Now</button>
     </div>
   </div>
-  <div class="marquee-wrap"><div class="marquee-track"><span>&#10022; AH COLLECTIONS</span><span class="dot">&#9670;</span><span>HANDCRAFTED JEWELLERY</span><span class="dot">&#9670;</span><span>ELEGANT &amp; TIMELESS</span><span class="dot">&#9670;</span><span>FREE DELIVERY ABOVE &#8377;999</span><span class="dot">&#9670;</span><span>CUSTOMIZE YOUR BANGLES</span><span class="dot">&#9670;</span><span>&#10022; AH COLLECTIONS</span><span class="dot">&#9670;</span><span>HANDCRAFTED JEWELLERY</span><span class="dot">&#9670;</span><span>ELEGANT &amp; TIMELESS</span><span class="dot">&#9670;</span><span>FREE DELIVERY ABOVE &#8377;999</span><span class="dot">&#9670;</span><span>CUSTOMIZE YOUR BANGLES</span><span class="dot">&#9670;</span></div></div>
-<div class="trust-bar">
-  <div class="trust-badge"><div class="icon">&#128666;</div><div><strong>Free Delivery</strong><span>On orders above &#8377;999</span></div></div>
-  <div class="trust-badge"><div class="icon">&#128274;</div><div><strong>Secure Payment</strong><span>100% safe UPI checkout</span></div></div>
-  <div class="trust-badge"><div class="icon">&#9995;</div><div><strong>Handcrafted</strong><span>Unique artisan pieces</span></div></div>
-  <div class="trust-badge"><div class="icon">&#8617;</div><div><strong>Easy Returns</strong><span>Hassle-free 7 day return</span></div></div>
-</div>
-<h2 style="text-align:center;">Our Collections</h2>
+  <div class="marquee-wrap">
+    <div class="marquee-track">
+      <span>&#10022; AH COLLECTIONS</span><span class="dot">&#9670;</span>
+      <span>HANDCRAFTED JEWELLERY</span><span class="dot">&#9670;</span>
+      <span>ELEGANT &amp; TIMELESS</span><span class="dot">&#9670;</span>
+      <span>FREE DELIVERY ABOVE &#8377;999</span><span class="dot">&#9670;</span>
+      <span>CUSTOMIZE YOUR BANGLES</span><span class="dot">&#9670;</span>
+      <span>&#10022; AH COLLECTIONS</span><span class="dot">&#9670;</span>
+      <span>HANDCRAFTED JEWELLERY</span><span class="dot">&#9670;</span>
+      <span>ELEGANT &amp; TIMELESS</span><span class="dot">&#9670;</span>
+      <span>FREE DELIVERY ABOVE &#8377;999</span><span class="dot">&#9670;</span>
+      <span>CUSTOMIZE YOUR BANGLES</span><span class="dot">&#9670;</span>
+    </div>
+  </div>
+  <div class="trust-bar">
+    <div class="trust-badge"><div class="icon">&#128666;</div><div><strong>Free Delivery</strong><span>On orders above &#8377;999</span></div></div>
+    <div class="trust-badge"><div class="icon">&#128274;</div><div><strong>Secure Payment</strong><span>100% safe UPI checkout</span></div></div>
+    <div class="trust-badge"><div class="icon">&#9995;</div><div><strong>Handcrafted</strong><span>Unique artisan pieces</span></div></div>
+    <div class="trust-badge"><div class="icon">&#8617;</div><div><strong>Easy Returns</strong><span>Hassle-free 7 day return</span></div></div>
+  </div>
+  <h2 style="text-align:center;">Our Collections</h2>
   <div class="grid">
     <div class="card" onclick="openCategory('Chains')"><img src="chaindisplay.jpeg"><p>Chains</p></div>
     <div class="card" onclick="openCategory('Bracelets')"><img src="braceletdisplay.jpeg"><p>Bracelets</p></div>
@@ -439,8 +364,9 @@ function submitNotify(){
   </div>
 </div>
 
+<!-- SHOP -->
 <div id="shop" class="hidden">
-  <button onclick="showPage('home')" style="margin:20px;">⬅ Back</button>
+  <button onclick="showPage('home')" style="margin:20px;">&#8592; Back</button>
   <h2 style="text-align:center;">Collections</h2>
   <div class="grid">
     <div class="card" onclick="openCategory('Chains')"><img src="chaindisplay.jpeg"><p>Chains</p></div>
@@ -450,19 +376,22 @@ function submitNotify(){
   </div>
 </div>
 
+<!-- PRODUCTS -->
 <div id="products" class="hidden"></div>
 
+<!-- CART -->
 <div id="cartPage" class="hidden">
   <div class="center-box">
-    <button onclick="showPage('shop')">⬅ Back</button>
+    <button onclick="showPage('shop')">&#8592; Back</button>
     <h2>Cart</h2>
     <div id="cartItems"></div>
   </div>
 </div>
 
+<!-- CHECKOUT -->
 <div id="checkout" class="hidden">
   <div class="center-box">
-    <button onclick="showPage('cartPage')">⬅ Back</button>
+    <button onclick="showPage('cartPage')">&#8592; Back</button>
     <h2>Customer Details</h2>
     <input placeholder="Name">
     <input placeholder="Phone">
@@ -470,20 +399,21 @@ function submitNotify(){
     <input placeholder="City">
     <input placeholder="Pincode">
     <br>
-    <button class="btn" onclick="proceedToUPI()" style="margin-top:15px;">Pay via UPI ➡</button>
+    <button class="btn" onclick="proceedToUPI()" style="margin-top:15px;">Pay via UPI &#10145;</button>
   </div>
 </div>
 
+<!-- UPI PAGE -->
 <div id="upiPage" class="hidden">
   <div class="center-box">
-    <button onclick="showPage('checkout')">⬅ Back</button>
+    <button onclick="showPage('checkout')">&#8592; Back</button>
     <h2>Pay via UPI</h2>
     <div class="upi-box">
       <p style="margin:0;color:#555;font-size:13px;">Scan QR or use UPI ID below</p>
       <img src="phonepescanner.jpeg" alt="UPI QR Code" style="width:200px;margin:10px auto;display:block;border-radius:10px;border:2px solid #D4AF37;">
       <div class="upi-id">yourupiid@upi</div>
-      <div class="upi-amount" id="upiAmount">₹0</div>
-      <p style="font-size:12px;color:#888;margin:8px 0 6px;">Scan QR above or tap to open your UPI app directly:</p>
+      <div class="upi-amount" id="upiAmount">&#8377;0</div>
+      <p style="font-size:12px;color:#888;margin:8px 0 6px;">Tap to open your UPI app directly:</p>
       <div style="display:flex;flex-wrap:wrap;justify-content:center;gap:10px;margin:10px 0;">
         <button onclick="openUpiApp('gpay')" style="display:flex;align-items:center;gap:6px;padding:9px 14px;background:#fff;border:1px solid #D4AF37;border-radius:8px;cursor:pointer;font-family:Poppins;font-size:13px;">
           <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/f/f2/Google_Pay_Logo.svg/512px-Google_Pay_Logo.svg.png" style="width:20px;height:20px;object-fit:contain;"> GPay
@@ -498,97 +428,88 @@ function submitNotify(){
           <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/6/68/BHIM_SVG_Logo.svg/1200px-BHIM_SVG_Logo.svg.png" style="width:20px;height:20px;object-fit:contain;"> BHIM
         </button>
       </div>
-      <div class="upi-steps"><strong>Steps:</strong><br>1. Tap your preferred UPI app above<br>2. The app opens with amount pre-filled<br>3. Complete the payment<br>4. Copy Transaction ID &amp; enter below</div>
+      <div class="upi-steps"><strong>Steps:</strong><br>1. Tap your UPI app above<br>2. App opens with amount pre-filled<br>3. Complete the payment<br>4. Copy Transaction ID &amp; enter below</div>
     </div>
     <div style="margin-top:20px;">
       <h3>Enter UPI Transaction ID</h3>
       <input id="txnInput" placeholder="e.g. 123456789012" style="max-width:300px;margin:10px auto;display:block;">
       <br>
-      <button class="btn" onclick="confirmOrder()">Confirm Order ✅</button>
+      <button class="btn" onclick="confirmOrder()">Confirm Order &#10003;</button>
     </div>
   </div>
 </div>
 
+<!-- SUCCESS -->
 <div id="successPage" class="hidden">
   <div class="center-box">
-    <h2>🎉 Thank You!</h2>
+    <h2>Thank You!</h2>
     <div id="successMsg"></div>
   </div>
 </div>
 
-
-  </div>
-</div>
 <!-- CUSTOMIZE POPUP -->
 <div id="customizePopup" class="popup-overlay">
   <div class="popup-box">
-    <button class="close-btn" onclick="closeCustomize()">✕</button>
-    <h2>✨ Customize Your Bangles</h2>
+    <button class="close-btn" onclick="closeCustomize()">&#10005;</button>
+    <h2>&#10024; Customize Your Bangles</h2>
     <p class="subtitle">Fill in your details and we'll craft it just for you</p>
-
     <div class="form-group">
       <label>Your Name</label>
       <input id="cName" type="text" placeholder="e.g. Anitha">
     </div>
-
     <div class="form-group">
       <label>Phone Number</label>
       <input id="cPhone" type="tel" placeholder="e.g. 9876543210">
     </div>
-
     <div class="form-group">
       <label>Preferred Colour</label>
       <div class="colour-options">
-        <div class="colour-chip" onclick="selectColour(this,'Gold')">🟡 Gold</div>
-        <div class="colour-chip" onclick="selectColour(this,'Silver')">⚪ Silver</div>
-        <div class="colour-chip" onclick="selectColour(this,'Rose Gold')">🌸 Rose Gold</div>
-        <div class="colour-chip" onclick="selectColour(this,'Antique')">🟤 Antique</div>
-        <div class="colour-chip" onclick="selectColour(this,'Multi-colour')">🌈 Multi-colour</div>
-        <div class="colour-chip" onclick="selectColour(this,'Other')">✏️ Other</div>
+        <div class="colour-chip" onclick="selectColour(this,'Gold')">Gold</div>
+        <div class="colour-chip" onclick="selectColour(this,'Silver')">Silver</div>
+        <div class="colour-chip" onclick="selectColour(this,'Rose Gold')">Rose Gold</div>
+        <div class="colour-chip" onclick="selectColour(this,'Antique')">Antique</div>
+        <div class="colour-chip" onclick="selectColour(this,'Multi-colour')">Multi-colour</div>
+        <div class="colour-chip" onclick="selectColour(this,'Other')">Other</div>
       </div>
     </div>
-
     <div class="form-group">
       <label>Specifications <span class="optional-tag">(optional)</span></label>
       <textarea id="cSpecs" placeholder="e.g. Size 2.6, thin design, no stones, matte finish..."></textarea>
     </div>
-
     <div class="form-group">
       <label>Upload Design Image <span class="optional-tag">(optional)</span></label>
       <div class="upload-area">
         <input type="file" accept="image/*" onchange="handleFileUpload(this)">
-        <p>📁 Click to upload from gallery</p>
+        <p>Click to upload from gallery</p>
         <span>Supports JPG, PNG, WEBP · Max 5MB</span>
       </div>
       <div id="uploadPreview" class="upload-preview"></div>
     </div>
-
     <div class="url-divider">or paste image link from Google</div>
-
     <div class="form-group">
       <label>Design Image Link <span class="optional-tag">(optional)</span></label>
       <input id="cImageUrl" type="url" placeholder="https://images.google.com/...">
-      <p style="font-size:12px;color:#a07d10;margin:6px 0 0;background:#fffdf5;border-left:3px solid #D4AF37;padding:6px 10px;border-radius:0 6px 6px 0;">💡 <strong>Tip:</strong> On Google Images, right-click your design image → <em>Copy image address</em> and paste it here so we can see your design clearly.</p>
+      <p style="font-size:12px;color:#a07d10;margin:6px 0 0;background:#fffdf5;border-left:3px solid #D4AF37;padding:6px 10px;border-radius:0 6px 6px 0;">
+        Tip: On Google Images, right-click your design image, copy image address and paste it here.
+      </p>
     </div>
-
     <div id="statusMsg" class="status-msg"></div>
-
-    <button id="submitBtn" class="submit-btn" onclick="sendCustomize()">Submit Request ✨</button>
+    <button id="submitBtn" class="submit-btn" onclick="sendCustomize()">Submit Request</button>
   </div>
 </div>
-
 
 <!-- NOTIFY ME POPUP -->
 <div id="notifyOverlay" class="notify-overlay">
   <div class="notify-box">
     <button class="notify-close" onclick="closeNotify()">&#10005;</button>
-    <h3>&#128276; Notify Me</h3>
+    <h3>Notify Me</h3>
     <p><strong id="notifyProduct"></strong> is currently sold out.<br>Leave your details and we'll contact you when it's back!</p>
     <input id="notifyName" type="text" placeholder="Your Name">
     <input id="notifyPhone" type="tel" placeholder="Phone Number">
-    <button class="notify-submit" onclick="submitNotify()">Notify Me &#128276;</button>
-    <div id="notifySuccessMsg" class="notify-success">&#10003; Saved! We will contact you when it's back in stock.</div>
+    <button class="notify-submit" onclick="submitNotify()">Notify Me</button>
+    <div id="notifySuccessMsg" class="notify-success">Saved! We will contact you when it's back in stock.</div>
   </div>
 </div>
+
 </body>
 </html>
