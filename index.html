@@ -4,44 +4,44 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>AH Collections</title>
-
+ 
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display&family=Poppins&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 <script>emailjs.init("5k8K3lISiv1nNEsSw");</script>
-
+ 
 <style>
 *{box-sizing:border-box;}
 body{margin:0;font-family:Poppins;background:#fff;}
 .hidden{display:none;}
-
+ 
 .nav{display:flex;justify-content:space-between;align-items:center;padding:20px 50px;border-bottom:1px solid #f0e8d0;}
 .logo{font-family:Playfair Display;font-size:26px;color:#D4AF37;}
 .nav a{margin-left:20px;cursor:pointer;text-decoration:none;color:black;font-size:14px;}
-
+ 
 .hero{display:flex;justify-content:center;align-items:center;gap:40px;padding:40px;}
-
+ 
 .grid{display:grid;grid-template-columns:repeat(4,1fr);gap:30px;padding:50px 100px;}
-
+ 
 .card{border:1px solid #eee;padding:15px;text-align:center;cursor:pointer;transition:0.3s;position:relative;}
 .card img{width:100%;aspect-ratio:1/1;object-fit:cover;}
 .card:hover{transform:scale(1.05);}
-
+ 
 .btn{padding:10px 20px;border:1px solid #D4AF37;background:none;color:#D4AF37;cursor:pointer;font-family:Poppins;font-size:14px;}
 .btn:hover{background:#D4AF37;color:#fff;}
-
+ 
 .center-box{max-width:600px;margin:50px auto;text-align:center;padding:0 20px;}
 .center-box input{width:100%;padding:12px;margin:8px 0;border-radius:6px;border:1px solid #ccc;font-family:Poppins;font-size:14px;}
-
+ 
 .cart-item{display:flex;justify-content:space-between;align-items:center;margin:15px 0;gap:10px;}
 .cart-item button{padding:5px 10px;border:none;background:#D4AF37;color:white;cursor:pointer;}
-
+ 
 .upi-box{border:1px solid #D4AF37;border-radius:12px;padding:30px;margin:20px auto;max-width:400px;background:#fffdf5;}
 .upi-box img{width:180px;margin:10px auto;display:block;}
 .upi-id{font-size:18px;font-weight:bold;color:#D4AF37;letter-spacing:1px;margin:10px 0;}
 .upi-amount{font-size:22px;font-weight:bold;color:#333;margin:10px 0;}
 .upi-steps{text-align:left;font-size:13px;color:#555;line-height:2;margin:15px 0;}
 .success-box{background:#e8f9ee;border:1px solid #25D366;border-radius:10px;padding:20px;margin:20px auto;max-width:400px;color:#1a7a3a;font-size:15px;}
-
+ 
 /* POPUP */
 .popup-overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.6);z-index:1000;justify-content:center;align-items:flex-start;overflow-y:auto;padding:30px 20px;}
 .popup-box{background:#fff;padding:35px 30px;width:100%;max-width:480px;border-radius:16px;text-align:left;position:relative;margin:auto;}
@@ -73,7 +73,7 @@ body{margin:0;font-family:Poppins;background:#fff;}
 .status-msg{margin-top:12px;padding:10px;border-radius:6px;font-size:13px;text-align:center;display:none;}
 .status-msg.success{background:#e8f9ee;color:#1a7a3a;display:block;}
 .status-msg.error{background:#fdecea;color:#c0392b;display:block;}
-
+ 
 /* SHIMMER & MARQUEE */
 .shimmer-text{background:linear-gradient(90deg,#b8860b 0%,#FFD700 40%,#fff8dc 60%,#b8860b 100%);background-size:200% auto;-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;animation:shimmer 3s linear infinite;font-family:Playfair Display;font-size:42px;margin:0;}
 @keyframes shimmer{0%{background-position:200% center;}100%{background-position:-200% center;}}
@@ -82,20 +82,20 @@ body{margin:0;font-family:Poppins;background:#fff;}
 .marquee-track span{color:#D4AF37;font-size:14px;letter-spacing:3px;text-transform:uppercase;}
 .marquee-track span.dot{color:#fff8dc;font-size:18px;}
 @keyframes marquee{0%{transform:translateX(0);}100%{transform:translateX(-50%);}}
-
+ 
 /* TRUST BAR */
 .trust-bar{display:flex;justify-content:center;gap:40px;padding:25px 50px;background:#fffdf5;border-top:1px solid #f0e8d0;border-bottom:1px solid #f0e8d0;flex-wrap:wrap;}
 .trust-badge{display:flex;align-items:center;gap:10px;}
 .trust-badge .icon{width:38px;height:38px;background:#D4AF37;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;}
 .trust-badge strong{display:block;color:#222;font-size:13px;}
 .trust-badge span{font-size:11px;color:#888;}
-
+ 
 /* SOLD OUT */
 .sold-out-badge{position:absolute;top:10px;left:10px;background:#e74c3c;color:#fff;font-size:11px;font-weight:600;padding:4px 10px;border-radius:20px;letter-spacing:1px;z-index:10;}
 .card.sold-out img{opacity:0.5;filter:grayscale(60%);}
 .card.sold-out .btn-sold{width:100%;padding:9px;background:#e74c3c;color:#fff;border:none;border-radius:6px;font-family:Poppins;font-size:13px;cursor:pointer;margin-top:6px;transition:0.2s;}
 .card.sold-out .btn-sold:hover{background:#c0392b;}
-
+ 
 /* NOTIFY POPUP */
 .notify-overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.6);z-index:2000;justify-content:center;align-items:center;}
 .notify-box{background:#fff;padding:30px;width:100%;max-width:380px;border-radius:16px;text-align:center;position:relative;}
@@ -108,28 +108,28 @@ body{margin:0;font-family:Poppins;background:#fff;}
 .notify-close{position:absolute;top:12px;right:16px;background:none;border:none;font-size:20px;cursor:pointer;color:#aaa;}
 .notify-close:hover{color:#333;}
 .notify-success{background:#e8f9ee;color:#1a7a3a;border-radius:8px;padding:10px;font-size:13px;margin-top:10px;display:none;}
-
+ 
 /* ===== RESPONSIVE - MOBILE & TABLET ===== */
 @media (max-width: 768px) {
-
+ 
   /* NAV */
   .nav{padding:15px 20px;flex-wrap:wrap;gap:10px;}
   .nav div{display:flex;flex-wrap:wrap;gap:8px;}
   .nav a{margin-left:10px;font-size:13px;}
   .logo{font-size:20px;}
-
+ 
   /* HERO */
   .hero{flex-direction:column;text-align:center;padding:20px 15px;gap:20px;}
   .hero img{width:220px !important;}
   .shimmer-text{font-size:28px !important;}
-
+ 
   /* GRID - 2 columns on mobile */
   .grid{
     grid-template-columns:repeat(2,1fr) !important;
     gap:15px !important;
     padding:20px 15px !important;
   }
-
+ 
   /* TRUST BAR */
   .trust-bar{
     gap:15px;
@@ -137,55 +137,55 @@ body{margin:0;font-family:Poppins;background:#fff;}
     justify-content:flex-start;
   }
   .trust-badge{width:45%;}
-
+ 
   /* MARQUEE */
   .marquee-track{gap:30px;}
   .marquee-track span{font-size:11px;letter-spacing:2px;}
-
+ 
   /* CARD */
   .card{padding:10px;}
-
+ 
   /* CENTER BOX */
   .center-box{
     margin:20px auto;
     padding:0 15px;
   }
   .center-box input{font-size:14px;}
-
+ 
   /* UPI BOX */
   .upi-box{padding:20px 15px;margin:15px;}
   .upi-id{font-size:15px;}
   .upi-amount{font-size:20px;}
-
+ 
   /* CART */
   .cart-item{flex-wrap:wrap;gap:8px;}
   .cart-item img{width:50px !important;}
-
+ 
   /* POPUP */
   .popup-box{padding:25px 15px;margin:10px;}
   .popup-overlay{padding:15px 10px;align-items:flex-start;}
-
+ 
   /* NOTIFY BOX */
   .notify-box{padding:25px 15px;margin:10px;}
-
+ 
   /* CATEGORY BACK BUTTON */
   .category-top{padding:15px 20px !important;}
-
+ 
   /* BUTTONS */
   .btn{padding:8px 16px;font-size:13px;}
-
+ 
   /* UPI APP BUTTONS */
   .upi-app-btns{gap:8px !important;}
   .upi-app-btns button{padding:8px 10px !important;font-size:12px !important;}
-
+ 
   /* SUCCESS PAGE */
   .success-box{margin:15px;font-size:14px;}
-
+ 
   /* H1 H2 */
   h1{font-size:24px;}
   h2{font-size:20px;}
 }
-
+ 
 @media (max-width: 400px) {
   .grid{
     grid-template-columns:repeat(2,1fr) !important;
@@ -197,7 +197,7 @@ body{margin:0;font-family:Poppins;background:#fff;}
   .trust-badge{width:100%;}
   .nav a{font-size:12px;}
 }
-
+ 
 @media (min-width: 769px) and (max-width: 1024px) {
   /* TABLET */
   .grid{
@@ -208,30 +208,30 @@ body{margin:0;font-family:Poppins;background:#fff;}
   .trust-bar{gap:20px;padding:20px 30px;}
 }
 </style>
-
+ 
 <script>
 let cart=[];
 let currentOrderDetails={};
 let selectedColour="";
 let uploadedFileBase64="";
 let uploadedFileName="";
-
+ 
 function showPage(p){
   ["home","shop","products","cartPage","checkout","upiPage","successPage"]
   .forEach(id=>document.getElementById(id).classList.add("hidden"));
   document.getElementById(p).classList.remove("hidden");
 }
-
+ 
 function addToCart(name,price,image){
   let f=cart.find(i=>i.name===name);
   if(f){f.qty++;}else{cart.push({name,price,image,qty:1});}
   updateCart();
 }
-
+ 
 function updateCart(){
   document.getElementById("cartCount").innerText=cart.reduce((s,i)=>s+i.qty,0);
 }
-
+ 
 function openCategory(name){
   let top=`<div class="category-top" style="display:flex;justify-content:space-between;padding:20px 100px;"><button onclick="showPage('shop')">&#8592; Back</button>${name==="Bangles"?`<button class="btn" onclick="openCustomize()">&#10024; Customize</button>`:""}</div>`;
   let content=top+`<h1 style="text-align:center;">${name}</h1><div class="grid">`;
@@ -260,7 +260,7 @@ function openCategory(name){
   document.getElementById("products").innerHTML=content;
   showPage("products");
 }
-
+ 
 function showCart(){
   let html="";let total=0;
   cart.forEach((i,index)=>{
@@ -271,10 +271,10 @@ function showCart(){
   document.getElementById("cartItems").innerHTML=html;
   showPage("cartPage");
 }
-
+ 
 function increaseQty(i){cart[i].qty++;showCart();updateCart();}
 function decreaseQty(i){if(cart[i].qty>1){cart[i].qty--;}else{cart.splice(i,1);}showCart();updateCart();}
-
+ 
 function proceedToUPI(){
   let name=document.querySelector("input[placeholder='Name']").value.trim();
   let phone=document.querySelector("input[placeholder='Phone']").value.trim();
@@ -287,14 +287,14 @@ function proceedToUPI(){
   document.getElementById("upiAmount").innerText="&#8377;"+total;
   showPage("upiPage");
 }
-
+ 
 function confirmOrder(){
   let txnId=document.getElementById("txnInput").value.trim();
   if(!txnId){alert("Please enter your UPI Transaction ID");return;}
-
+ 
   let orderItems="";
   cart.forEach(i=>{orderItems+=i.name+" x "+i.qty+" = Rs."+i.price*i.qty+"\n";});
-
+ 
   emailjs.send("service_123456","template_xgijxrk",{
     customer_name:currentOrderDetails.name,
     name:currentOrderDetails.name,
@@ -314,14 +314,14 @@ function confirmOrder(){
   .catch(function(err){
     console.error("Order email failed:",JSON.stringify(err));
   });
-
+ 
   cart=[];updateCart();
   document.getElementById("successMsg").innerHTML='<div class="success-box">&#10003; <strong>Order Confirmed!</strong><br><br>Thank you, <strong>'+currentOrderDetails.name+'</strong>!<br>Your order worth <strong>Rs.'+currentOrderDetails.total+'</strong> has been placed.<br><br>We will process your order shortly.<br>UPI Txn ID: <strong>'+txnId+'</strong></div><br><button class="btn" onclick="showPage(\'home\')">Continue Shopping</button>';
   showPage("successPage");
 }
-
+ 
 function notifySeller(msg){window.open("https://wa.me/918885580886?text="+msg);}
-
+ 
 function openUpiApp(app){
   const total=currentOrderDetails.total||0;
   const upiId='yourupiid@upi';
@@ -335,7 +335,7 @@ function openUpiApp(app){
   window.location.href=url;
   setTimeout(function(){alert('Could not open '+app.toUpperCase()+'. Please scan the QR code above.');},1500);
 }
-
+ 
 /* CUSTOMIZE */
 function openCustomize(){
   document.getElementById("customizePopup").style.display="flex";
@@ -407,7 +407,7 @@ function sendCustomize(){
     btn.disabled=false;btn.innerText="Submit Request";
   });
 }
-
+ 
 /* NOTIFY ME */
 let currentNotifyProduct='';
 function openNotify(productName){
@@ -434,7 +434,7 @@ function submitNotify(){
 </script>
 </head>
 <body>
-
+ 
 <!-- NAV -->
 <div class="nav">
   <div class="logo">AH COLLECTIONS</div>
@@ -444,7 +444,7 @@ function submitNotify(){
     <a onclick="showCart()">Cart &#128722; (<span id="cartCount">0</span>)</a>
   </div>
 </div>
-
+ 
 <!-- HOME -->
 <div id="home">
   <div class="hero">
@@ -483,7 +483,7 @@ function submitNotify(){
     <div class="card" onclick="openCategory('Bangles')"><img src="banglesdisplay.jpeg"><p>Bangles</p></div>
   </div>
 </div>
-
+ 
 <!-- SHOP -->
 <div id="shop" class="hidden">
   <button onclick="showPage('home')" style="margin:20px;">&#8592; Back</button>
@@ -495,10 +495,10 @@ function submitNotify(){
     <div class="card" onclick="openCategory('Bangles')"><img src="banglesdisplay.jpeg"><p>Bangles</p></div>
   </div>
 </div>
-
+ 
 <!-- PRODUCTS -->
 <div id="products" class="hidden"></div>
-
+ 
 <!-- CART -->
 <div id="cartPage" class="hidden">
   <div class="center-box">
@@ -507,7 +507,7 @@ function submitNotify(){
     <div id="cartItems"></div>
   </div>
 </div>
-
+ 
 <!-- CHECKOUT -->
 <div id="checkout" class="hidden">
   <div class="center-box">
@@ -522,7 +522,7 @@ function submitNotify(){
     <button class="btn" onclick="proceedToUPI()" style="margin-top:15px;">Pay via UPI &#10145;</button>
   </div>
 </div>
-
+ 
 <!-- UPI PAGE -->
 <div id="upiPage" class="hidden">
   <div class="center-box">
@@ -558,7 +558,7 @@ function submitNotify(){
     </div>
   </div>
 </div>
-
+ 
 <!-- SUCCESS -->
 <div id="successPage" class="hidden">
   <div class="center-box">
@@ -566,7 +566,7 @@ function submitNotify(){
     <div id="successMsg"></div>
   </div>
 </div>
-
+ 
 <!-- CUSTOMIZE POPUP -->
 <div id="customizePopup" class="popup-overlay">
   <div class="popup-box">
@@ -617,7 +617,7 @@ function submitNotify(){
     <button id="submitBtn" class="submit-btn" onclick="sendCustomize()">Submit Request</button>
   </div>
 </div>
-
+ 
 <!-- NOTIFY ME POPUP -->
 <div id="notifyOverlay" class="notify-overlay">
   <div class="notify-box">
@@ -630,6 +630,6 @@ function submitNotify(){
     <div id="notifySuccessMsg" class="notify-success">Saved! We will contact you when it's back in stock.</div>
   </div>
 </div>
-
+ 
 </body>
 </html>
