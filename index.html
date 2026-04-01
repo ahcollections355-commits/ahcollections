@@ -42,6 +42,13 @@ body{margin:0;font-family:Poppins;background:#fff;}
 .upi-steps{text-align:left;font-size:13px;color:#555;line-height:2;margin:15px 0;}
 .success-box{background:#e8f9ee;border:1px solid #25D366;border-radius:10px;padding:20px;margin:20px auto;max-width:400px;color:#1a7a3a;font-size:15px;}
  
+/* SOLD OUT */
+.sold-out-badge{position:absolute;top:10px;left:10px;background:#e74c3c;color:#fff;font-size:11px;font-weight:600;padding:4px 10px;border-radius:20px;letter-spacing:1px;z-index:10;}
+.stock-badge{position:absolute;top:10px;right:10px;background:#D4AF37;color:#fff;font-size:11px;font-weight:600;padding:4px 10px;border-radius:20px;z-index:10;}
+.card.sold-out img{opacity:0.5;filter:grayscale(60%);}
+.btn-sold{width:100%;padding:9px;background:#e74c3c;color:#fff;border:none;border-radius:6px;font-family:Poppins;font-size:13px;cursor:pointer;margin-top:6px;}
+.btn-sold:hover{background:#c0392b;}
+
 /* POPUP */
 .popup-overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.6);z-index:1000;justify-content:center;align-items:flex-start;overflow-y:auto;padding:30px 20px;}
 .popup-box{background:#fff;padding:35px 30px;width:100%;max-width:480px;border-radius:16px;text-align:left;position:relative;margin:auto;}
@@ -89,13 +96,24 @@ body{margin:0;font-family:Poppins;background:#fff;}
 .trust-badge .icon{width:38px;height:38px;background:#D4AF37;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;}
 .trust-badge strong{display:block;color:#222;font-size:13px;}
 .trust-badge span{font-size:11px;color:#888;}
- 
-/* SOLD OUT */
-.sold-out-badge{position:absolute;top:10px;left:10px;background:#e74c3c;color:#fff;font-size:11px;font-weight:600;padding:4px 10px;border-radius:20px;letter-spacing:1px;z-index:10;}
-.card.sold-out img{opacity:0.5;filter:grayscale(60%);}
-.card.sold-out .btn-sold{width:100%;padding:9px;background:#e74c3c;color:#fff;border:none;border-radius:6px;font-family:Poppins;font-size:13px;cursor:pointer;margin-top:6px;transition:0.2s;}
-.card.sold-out .btn-sold:hover{background:#c0392b;}
- 
+
+/* ADMIN PANEL */
+.admin-panel{background:#fff;border:2px solid #D4AF37;border-radius:16px;padding:30px;max-width:700px;margin:30px auto;}
+.admin-panel h2{font-family:Playfair Display;color:#D4AF37;margin-bottom:20px;}
+.stock-row{display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid #f0e8d0;gap:10px;flex-wrap:wrap;}
+.stock-row .name{font-size:14px;color:#333;flex:1;min-width:160px;}
+.stock-row .stock-info{font-size:13px;color:#888;min-width:80px;}
+.stock-row .stock-info.sold{color:#e74c3c;font-weight:600;}
+.stock-row .stock-info.low{color:#e67e22;font-weight:600;}
+.stock-row .stock-info.ok{color:#27ae60;font-weight:600;}
+.restock-btn{padding:7px 16px;background:none;border:1px solid #27ae60;color:#27ae60;border-radius:20px;font-family:Poppins;font-size:12px;cursor:pointer;}
+.restock-btn:hover{background:#27ae60;color:#fff;}
+.restock-all-btn{padding:10px 24px;background:#D4AF37;color:#fff;border:none;border-radius:8px;font-family:Poppins;font-size:14px;cursor:pointer;margin-top:20px;}
+.restock-all-btn:hover{background:#c09b28;}
+.admin-login{max-width:380px;margin:60px auto;text-align:center;padding:0 20px;}
+.admin-login input{width:100%;padding:12px;margin:10px 0;border-radius:8px;border:1px solid #ddd;font-family:Poppins;font-size:14px;}
+.admin-login input:focus{outline:none;border-color:#D4AF37;}
+
 /* NOTIFY POPUP */
 .notify-overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.6);z-index:2000;justify-content:center;align-items:center;}
 .notify-box{background:#fff;padding:30px;width:100%;max-width:380px;border-radius:16px;text-align:center;position:relative;}
@@ -109,107 +127,106 @@ body{margin:0;font-family:Poppins;background:#fff;}
 .notify-close:hover{color:#333;}
 .notify-success{background:#e8f9ee;color:#1a7a3a;border-radius:8px;padding:10px;font-size:13px;margin-top:10px;display:none;}
  
-/* ===== RESPONSIVE - MOBILE & TABLET ===== */
+/* RESPONSIVE */
 @media (max-width: 768px) {
- 
-  /* NAV */
   .nav{padding:15px 20px;flex-wrap:wrap;gap:10px;}
   .nav div{display:flex;flex-wrap:wrap;gap:8px;}
   .nav a{margin-left:10px;font-size:13px;}
   .logo{font-size:20px;}
- 
-  /* HERO */
   .hero{flex-direction:column;text-align:center;padding:20px 15px;gap:20px;}
   .hero img{width:220px !important;}
   .shimmer-text{font-size:28px !important;}
- 
-  /* GRID - 2 columns on mobile */
-  .grid{
-    grid-template-columns:repeat(2,1fr) !important;
-    gap:15px !important;
-    padding:20px 15px !important;
-  }
- 
-  /* TRUST BAR */
-  .trust-bar{
-    gap:15px;
-    padding:20px 15px;
-    justify-content:flex-start;
-  }
+  .grid{grid-template-columns:repeat(2,1fr) !important;gap:15px !important;padding:20px 15px !important;}
+  .trust-bar{gap:15px;padding:20px 15px;justify-content:flex-start;}
   .trust-badge{width:45%;}
- 
-  /* MARQUEE */
   .marquee-track{gap:30px;}
   .marquee-track span{font-size:11px;letter-spacing:2px;}
- 
-  /* CARD */
   .card{padding:10px;}
- 
-  /* CENTER BOX */
-  .center-box{
-    margin:20px auto;
-    padding:0 15px;
-  }
+  .center-box{margin:20px auto;padding:0 15px;}
   .center-box input{font-size:14px;}
- 
-  /* UPI BOX */
   .upi-box{padding:20px 15px;margin:15px;}
   .upi-id{font-size:15px;}
   .upi-amount{font-size:20px;}
- 
-  /* CART */
   .cart-item{flex-wrap:wrap;gap:8px;}
   .cart-item img{width:50px !important;}
- 
-  /* POPUP */
   .popup-box{padding:25px 15px;margin:10px;}
   .popup-overlay{padding:15px 10px;align-items:flex-start;}
- 
-  /* NOTIFY BOX */
   .notify-box{padding:25px 15px;margin:10px;}
- 
-  /* CATEGORY BACK BUTTON */
   .category-top{padding:15px 20px !important;}
- 
-  /* BUTTONS */
   .btn{padding:8px 16px;font-size:13px;}
- 
-  /* UPI APP BUTTONS */
   .upi-app-btns{gap:8px !important;}
   .upi-app-btns button{padding:8px 10px !important;font-size:12px !important;}
- 
-  /* SUCCESS PAGE */
   .success-box{margin:15px;font-size:14px;}
- 
-  /* H1 H2 */
   h1{font-size:24px;}
   h2{font-size:20px;}
+  .admin-panel{margin:15px;padding:20px 15px;}
+  .stock-row{flex-direction:column;align-items:flex-start;gap:8px;}
 }
- 
 @media (max-width: 400px) {
-  .grid{
-    grid-template-columns:repeat(2,1fr) !important;
-    gap:10px !important;
-    padding:15px 10px !important;
-  }
+  .grid{grid-template-columns:repeat(2,1fr) !important;gap:10px !important;padding:15px 10px !important;}
   .hero img{width:180px !important;}
   .shimmer-text{font-size:24px !important;}
   .trust-badge{width:100%;}
   .nav a{font-size:12px;}
 }
- 
 @media (min-width: 769px) and (max-width: 1024px) {
-  /* TABLET */
-  .grid{
-    grid-template-columns:repeat(3,1fr) !important;
-    padding:30px 40px !important;
-  }
+  .grid{grid-template-columns:repeat(3,1fr) !important;padding:30px 40px !important;}
   .hero img{width:300px !important;}
   .trust-bar{gap:20px;padding:20px 30px;}
 }
 </style>
  
 <script>
+// ============================================================
+// STOCK SYSTEM — edit MAX_STOCK to change the limit per item
+// ============================================================
+const MAX_STOCK = 2;
+
+// Stock is stored in localStorage so it persists across page reloads
+// Keys are product names, values are number of units SOLD
+function getSoldCount(name){
+  return parseInt(localStorage.getItem("sold_"+name)||"0");
+}
+function getStock(name){
+  return MAX_STOCK - getSoldCount(name);
+}
+function isAvailable(name){
+  return getStock(name) > 0;
+}
+function recordSale(name, qty){
+  const sold = getSoldCount(name) + qty;
+  localStorage.setItem("sold_"+name, sold);
+}
+function restockItem(name){
+  localStorage.removeItem("sold_"+name);
+}
+function restockAll(){
+  Object.keys(localStorage).forEach(k=>{
+    if(k.startsWith("sold_")) localStorage.removeItem(k);
+  });
+}
+
+// All products list for admin panel
+const ALL_PRODUCTS = [
+  {name:"Flower Chain",price:399,image:"chain1.jpeg"},
+  {name:"Bow Heart Chain",price:499,image:"chain2.jpg"},
+  {name:"Pearl Flower Chain",price:449,image:"chain3.jpeg"},
+  {name:"Snowflake Chain",price:379,image:"chain4.jpeg"},
+  {name:"Crystal Charm Chain",price:549,image:"chain5.jpeg"},
+  {name:"Teardrop Chain",price:429,image:"chain6.jpeg"},
+  {name:"Rectangle Charm Chain",price:459,image:"chain7.jpeg"},
+  {name:"Heart Pendant Chain",price:499,image:"chain8.jpeg"},
+  {name:"Multi Heart Chain",price:529,image:"chain9.jpeg"},
+  {name:"Circle Pendant Chain",price:389,image:"chain10.jpeg"},
+  {name:"Bracelet1",price:399,image:"braceletdisplay.jpeg"},
+  {name:"Earring1",price:299,image:"earringsdisplay.jpeg"},
+  {name:"Gold Stone Bangles",price:599,image:"bangles1.jpeg"},
+  {name:"Yellow Red Silk Bangles",price:699,image:"bangles2.jpeg"},
+  {name:"Multicolour Stone Bangles",price:649,image:"bangles3.jpeg"},
+  {name:"Green Silk Bangles",price:749,image:"bangles4.jpeg"},
+  {name:"Pink Green Bangles",price:799,image:"bangles5.jpeg"}
+];
+
 let cart=[];
 let currentOrderDetails={};
 let selectedColour="";
@@ -217,45 +234,94 @@ let uploadedFileBase64="";
 let uploadedFileName="";
  
 function showPage(p){
-  ["home","shop","products","cartPage","checkout","upiPage","successPage"]
-  .forEach(id=>document.getElementById(id).classList.add("hidden"));
+  ["home","shop","products","cartPage","checkout","upiPage","successPage","adminLogin","adminPanel"]
+  .forEach(id=>{const el=document.getElementById(id);if(el)el.classList.add("hidden");});
   document.getElementById(p).classList.remove("hidden");
 }
  
 function addToCart(name,price,image){
+  // Check stock
+  const inCart = cart.filter(i=>i.name===name).reduce((s,i)=>s+i.qty,0);
+  const remaining = getStock(name) - inCart;
+  if(remaining <= 0){
+    alert("Sorry! This item is out of stock.");
+    return;
+  }
   let f=cart.find(i=>i.name===name);
   if(f){f.qty++;}else{cart.push({name,price,image,qty:1});}
   updateCart();
+  // Small feedback
+  const btn = event.target;
+  const orig = btn.innerText;
+  btn.innerText = "Added ✓";
+  btn.style.background = "#D4AF37";
+  btn.style.color = "#fff";
+  setTimeout(()=>{btn.innerText=orig;btn.style.background="";btn.style.color="";},1000);
 }
  
 function updateCart(){
   document.getElementById("cartCount").innerText=cart.reduce((s,i)=>s+i.qty,0);
 }
- 
+
+// Build a product card HTML
+function productCard(name, price, image){
+  const stock = getStock(name);
+  const soldOut = stock <= 0;
+  if(soldOut){
+    return `<div class="card sold-out">
+      <span class="sold-out-badge">SOLD OUT</span>
+      <img src="${image}">
+      <p>${name}</p>
+      <p>&#8377;${price}</p>
+      <button class="btn-sold" onclick="openNotify('${name}')">Notify Me</button>
+    </div>`;
+  } else {
+    const badgeHtml = stock === 1 ? `<span class="stock-badge">Last 1!</span>` : "";
+    return `<div class="card">
+      ${badgeHtml}
+      <img src="${image}">
+      <p>${name}</p>
+      <p>&#8377;${price}</p>
+      <button class="btn" onclick="addToCart('${name}',${price},'${image}')">ADD</button>
+    </div>`;
+  }
+}
+
 function openCategory(name){
   let top=`<div class="category-top" style="display:flex;justify-content:space-between;padding:20px 100px;"><button onclick="showPage('shop')">&#8592; Back</button>${name==="Bangles"?`<button class="btn" onclick="openCustomize()">&#10024; Customize</button>`:""}</div>`;
   let content=top+`<h1 style="text-align:center;">${name}</h1><div class="grid">`;
-  if(name==="Chains"){content+=`
-    <div class="card"><img src="chain1.jpeg"><p>Flower Chain</p><p>&#8377;399</p><button class="btn" onclick="addToCart('Flower Chain',399,'chain1.jpeg')">ADD</button></div>
-    <div class="card"><img src="chain2.jpg"><p>Bow Heart Chain</p><p>&#8377;499</p><button class="btn" onclick="addToCart('Bow Heart Chain',499,'chain2.jpg')">ADD</button></div>
-    <div class="card"><img src="chain3.jpeg"><p>Pearl Flower Chain</p><p>&#8377;449</p><button class="btn" onclick="addToCart('Pearl Flower Chain',449,'chain3.jpeg')">ADD</button></div>
-    <div class="card"><img src="chain4.jpeg"><p>Snowflake Chain</p><p>&#8377;379</p><button class="btn" onclick="addToCart('Snowflake Chain',379,'chain4.jpeg')">ADD</button></div>
-    <div class="card"><img src="chain5.jpeg"><p>Crystal Charm Chain</p><p>&#8377;549</p><button class="btn" onclick="addToCart('Crystal Charm Chain',549,'chain5.jpeg')">ADD</button></div>
-    <div class="card"><img src="chain6.jpeg"><p>Teardrop Chain</p><p>&#8377;429</p><button class="btn" onclick="addToCart('Teardrop Chain',429,'chain6.jpeg')">ADD</button></div>
-    <div class="card"><img src="chain7.jpeg"><p>Rectangle Charm Chain</p><p>&#8377;459</p><button class="btn" onclick="addToCart('Rectangle Charm Chain',459,'chain7.jpeg')">ADD</button></div>
-    <div class="card"><img src="chain8.jpeg"><p>Heart Pendant Chain</p><p>&#8377;499</p><button class="btn" onclick="addToCart('Heart Pendant Chain',499,'chain8.jpeg')">ADD</button></div>
-    <div class="card"><img src="chain9.jpeg"><p>Multi Heart Chain</p><p>&#8377;529</p><button class="btn" onclick="addToCart('Multi Heart Chain',529,'chain9.jpeg')">ADD</button></div>
-    <div class="card"><img src="chain10.jpeg"><p>Circle Pendant Chain</p><p>&#8377;389</p><button class="btn" onclick="addToCart('Circle Pendant Chain',389,'chain10.jpeg')">ADD</button></div>
-  `;}
-  if(name==="Bracelets"){content+=`<div class="card"><img src="braceletdisplay.jpeg"><p>&#8377;399</p><button class="btn" onclick="addToCart('Bracelet1',399,'braceletdisplay.jpeg')">ADD</button></div>`;}
-  if(name==="Earrings"){content+=`<div class="card"><img src="earringsdisplay.jpeg"><p>&#8377;299</p><button class="btn" onclick="addToCart('Earring1',299,'earringsdisplay.jpeg')">ADD</button></div>`;}
-  if(name==="Bangles"){content+=`
-    <div class="card"><img src="bangles1.jpeg"><p>Gold Stone Bangles</p><p>&#8377;599</p><button class="btn" onclick="addToCart('Gold Stone Bangles',599,'bangles1.jpeg')">ADD</button></div>
-    <div class="card"><img src="bangles2.jpeg"><p>Yellow Red Silk Bangles</p><p>&#8377;699</p><button class="btn" onclick="addToCart('Yellow Red Silk Bangles',699,'bangles2.jpeg')">ADD</button></div>
-    <div class="card"><img src="bangles3.jpeg"><p>Multicolour Stone Bangles</p><p>&#8377;649</p><button class="btn" onclick="addToCart('Multicolour Stone Bangles',649,'bangles3.jpeg')">ADD</button></div>
-    <div class="card"><img src="bangles4.jpeg"><p>Green Silk Bangles</p><p>&#8377;749</p><button class="btn" onclick="addToCart('Green Silk Bangles',749,'bangles4.jpeg')">ADD</button></div>
-    <div class="card"><img src="bangles5.jpeg"><p>Pink Green Bangles</p><p>&#8377;799</p><button class="btn" onclick="addToCart('Pink Green Bangles',799,'bangles5.jpeg')">ADD</button></div>
-  `;}
+
+  if(name==="Chains"){
+    const chains=[
+      {name:"Flower Chain",price:399,image:"chain1.jpeg"},
+      {name:"Bow Heart Chain",price:499,image:"chain2.jpg"},
+      {name:"Pearl Flower Chain",price:449,image:"chain3.jpeg"},
+      {name:"Snowflake Chain",price:379,image:"chain4.jpeg"},
+      {name:"Crystal Charm Chain",price:549,image:"chain5.jpeg"},
+      {name:"Teardrop Chain",price:429,image:"chain6.jpeg"},
+      {name:"Rectangle Charm Chain",price:459,image:"chain7.jpeg"},
+      {name:"Heart Pendant Chain",price:499,image:"chain8.jpeg"},
+      {name:"Multi Heart Chain",price:529,image:"chain9.jpeg"},
+      {name:"Circle Pendant Chain",price:389,image:"chain10.jpeg"}
+    ];
+    chains.forEach(c=>{ content+=productCard(c.name,c.price,c.image); });
+  }
+  if(name==="Bracelets"){
+    content+=productCard("Bracelet1",399,"braceletdisplay.jpeg");
+  }
+  if(name==="Earrings"){
+    content+=productCard("Earring1",299,"earringsdisplay.jpeg");
+  }
+  if(name==="Bangles"){
+    const bangles=[
+      {name:"Gold Stone Bangles",price:599,image:"bangles1.jpeg"},
+      {name:"Yellow Red Silk Bangles",price:699,image:"bangles2.jpeg"},
+      {name:"Multicolour Stone Bangles",price:649,image:"bangles3.jpeg"},
+      {name:"Green Silk Bangles",price:749,image:"bangles4.jpeg"},
+      {name:"Pink Green Bangles",price:799,image:"bangles5.jpeg"}
+    ];
+    bangles.forEach(b=>{ content+=productCard(b.name,b.price,b.image); });
+  }
   content+=`</div>`;
   document.getElementById("products").innerHTML=content;
   showPage("products");
@@ -267,12 +333,21 @@ function showCart(){
     total+=i.price*i.qty;
     html+=`<div class="cart-item"><img src="${i.image}" width="60"><p>${i.name}</p><div><button onclick="decreaseQty(${index})">&#10134;</button><span style="margin:0 10px;">${i.qty}</span><button onclick="increaseQty(${index})">&#10133;</button></div><p>&#8377;${i.price*i.qty}</p></div>`;
   });
-  html+=`<h3>Total &#8377;${total}</h3><button class="btn" onclick="showPage('checkout')">Proceed to Checkout</button>`;
+  if(cart.length===0){html="<p>Your cart is empty.</p>";}
+  else{html+=`<h3>Total &#8377;${total}</h3><button class="btn" onclick="showPage('checkout')">Proceed to Checkout</button>`;}
   document.getElementById("cartItems").innerHTML=html;
   showPage("cartPage");
 }
  
-function increaseQty(i){cart[i].qty++;showCart();updateCart();}
+function increaseQty(i){
+  const item=cart[i];
+  const inCart=cart.filter(c=>c.name===item.name).reduce((s,c)=>s+c.qty,0);
+  if(inCart>=getStock(item.name)){
+    alert("No more stock available for this item.");
+    return;
+  }
+  cart[i].qty++;showCart();updateCart();
+}
 function decreaseQty(i){if(cart[i].qty>1){cart[i].qty--;}else{cart.splice(i,1);}showCart();updateCart();}
  
 function proceedToUPI(){
@@ -295,6 +370,9 @@ function confirmOrder(){
   let orderItems="";
   cart.forEach(i=>{orderItems+=i.name+" x "+i.qty+" = Rs."+i.price*i.qty+"\n";});
  
+  // Record the sale in stock system
+  cart.forEach(i=>{ recordSale(i.name, i.qty); });
+
   emailjs.send("service_123456","template_xgijxrk",{
     customer_name:currentOrderDetails.name,
     name:currentOrderDetails.name,
@@ -307,13 +385,8 @@ function confirmOrder(){
     to_email:"ahcollections355@gmail.com",
     message:"Order from: "+currentOrderDetails.name+" | Phone: "+currentOrderDetails.phone+" | Items: "+orderItems+" | Total: Rs."+currentOrderDetails.total+" | Txn: "+txnId
   })
-  .then(function(){
-    console.log("Order email sent!");
-    alert("Order confirmed! Email sent to shop.");
-  })
-  .catch(function(err){
-    console.error("Order email failed:",JSON.stringify(err));
-  });
+  .then(function(){console.log("Order email sent!");})
+  .catch(function(err){console.error("Order email failed:",JSON.stringify(err));});
  
   cart=[];updateCart();
   document.getElementById("successMsg").innerHTML='<div class="success-box">&#10003; <strong>Order Confirmed!</strong><br><br>Thank you, <strong>'+currentOrderDetails.name+'</strong>!<br>Your order worth <strong>Rs.'+currentOrderDetails.total+'</strong> has been placed.<br><br>We will process your order shortly.<br>UPI Txn ID: <strong>'+txnId+'</strong></div><br><button class="btn" onclick="showPage(\'home\')">Continue Shopping</button>';
@@ -431,6 +504,54 @@ function submitNotify(){
   document.getElementById('notifySuccessMsg').style.display='block';
   setTimeout(function(){closeNotify();window.open('https://wa.me/918885580886?text='+msg);},1200);
 }
+
+/* ADMIN PANEL */
+const ADMIN_PASSWORD = "ah2024"; // Change this to your own password
+
+function openAdminLogin(){
+  showPage('adminLogin');
+}
+
+function checkAdminPassword(){
+  const pw = document.getElementById('adminPwInput').value;
+  if(pw === ADMIN_PASSWORD){
+    renderAdminPanel();
+    showPage('adminPanel');
+  } else {
+    alert("Wrong password. Please try again.");
+  }
+}
+
+function renderAdminPanel(){
+  let html = '';
+  ALL_PRODUCTS.forEach(p=>{
+    const sold = getSoldCount(p.name);
+    const remaining = MAX_STOCK - sold;
+    let statusClass = 'ok';
+    let statusText = remaining + ' remaining';
+    if(remaining === 0){ statusClass='sold'; statusText='Sold Out'; }
+    else if(remaining === 1){ statusClass='low'; statusText='Last 1'; }
+    html += `<div class="stock-row">
+      <span class="name">${p.name}</span>
+      <span class="stock-info ${statusClass}">${statusText}</span>
+      <button class="restock-btn" onclick="doRestock('${p.name}')">&#8635; Restock</button>
+    </div>`;
+  });
+  document.getElementById('stockList').innerHTML = html;
+}
+
+function doRestock(name){
+  restockItem(name);
+  renderAdminPanel();
+}
+
+function doRestockAll(){
+  if(confirm("Restock ALL items back to "+MAX_STOCK+" each?")){
+    restockAll();
+    renderAdminPanel();
+    alert("All items restocked!");
+  }
+}
 </script>
 </head>
 <body>
@@ -442,6 +563,7 @@ function submitNotify(){
     <a onclick="showPage('home')">Home</a>
     <a onclick="showPage('shop')">Shop</a>
     <a onclick="showCart()">Cart &#128722; (<span id="cartCount">0</span>)</a>
+    <a onclick="openAdminLogin()" style="color:#D4AF37;font-size:12px;">&#9881; Admin</a>
   </div>
 </div>
  
@@ -566,6 +688,28 @@ function submitNotify(){
     <div id="successMsg"></div>
   </div>
 </div>
+
+<!-- ADMIN LOGIN -->
+<div id="adminLogin" class="hidden">
+  <div class="admin-login">
+    <button onclick="showPage('home')" style="margin-bottom:20px;">&#8592; Back to Home</button>
+    <h2 style="font-family:Playfair Display;color:#D4AF37;">Admin Panel</h2>
+    <p style="color:#888;font-size:14px;">Enter your password to manage stock</p>
+    <input id="adminPwInput" type="password" placeholder="Password" onkeydown="if(event.key==='Enter')checkAdminPassword()">
+    <button class="btn" onclick="checkAdminPassword()" style="width:100%;margin-top:10px;">Login</button>
+  </div>
+</div>
+
+<!-- ADMIN PANEL -->
+<div id="adminPanel" class="hidden">
+  <div class="admin-panel">
+    <button onclick="showPage('home')" style="margin-bottom:20px;">&#8592; Back to Home</button>
+    <h2>&#9881; Stock Manager</h2>
+    <p id="adminDesc" style="color:#888;font-size:13px;margin-bottom:20px;"></p>
+    <div id="stockList"></div>
+    <button class="restock-all-btn" onclick="doRestockAll()">&#8635; Restock All Items</button>
+  </div>
+</div>
  
 <!-- CUSTOMIZE POPUP -->
 <div id="customizePopup" class="popup-overlay">
@@ -630,6 +774,14 @@ function submitNotify(){
     <div id="notifySuccessMsg" class="notify-success">Saved! We will contact you when it's back in stock.</div>
   </div>
 </div>
+
+<!-- Fix the PHP tag that accidentally crept in - pure JS version -->
+<script>
+document.addEventListener('DOMContentLoaded', function(){
+  const desc = document.getElementById('adminDesc');
+  if(desc) desc.innerHTML = 'Each item has a limit of <strong style="color:#D4AF37;">'+MAX_STOCK+'</strong> units. Restock any item individually or all at once.';
+});
+</script>
  
 </body>
 </html>
