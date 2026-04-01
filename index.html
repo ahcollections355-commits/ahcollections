@@ -191,12 +191,24 @@ function proceedToUPI(){
 function confirmOrder(){
   let txnId=document.getElementById("txnInput").value.trim();
   if(!txnId){alert("Please enter your UPI Transaction ID");return;}
-  let msg="New Order - UPI Payment%0A%0A";
-  msg+="Name: "+currentOrderDetails.name+"%0APhone: "+currentOrderDetails.phone+"%0AAddress: "+currentOrderDetails.address+", "+currentOrderDetails.city+" - "+currentOrderDetails.pincode+"%0A%0AOrder:%0A";
-  cart.forEach(i=>{msg+="- "+i.name+" x "+i.qty+" = &#8377;"+i.price*i.qty+"%0A";});
-  msg+="%0ATotal: &#8377;"+currentOrderDetails.total+"%0AUPI Txn ID: "+txnId;
+
+  let orderItems="";
+  cart.forEach(i=>{orderItems+=i.name+" x "+i.qty+" = Rs."+i.price*i.qty+"\n";});
+
+  emailjs.send("service_123456","template_ORDER",{
+    customer_name:currentOrderDetails.name,
+    phone:currentOrderDetails.phone,
+    address:currentOrderDetails.address+", "+currentOrderDetails.city+" - "+currentOrderDetails.pincode,
+    order_items:orderItems,
+    total:"Rs."+currentOrderDetails.total,
+    txn_id:txnId,
+    email:"ahcollections355@gmail.com"
+  })
+  .then(function(){console.log("Order email sent!");})
+  .catch(function(err){console.error("Order email failed:",JSON.stringify(err));});
+
   cart=[];updateCart();
-  document.getElementById("successMsg").innerHTML='<div class="success-box">&#10003; <strong>Order Confirmed!</strong><br><br>Thank you, <strong>'+currentOrderDetails.name+'</strong>!<br>Your order worth <strong>&#8377;'+currentOrderDetails.total+'</strong> has been placed.<br><br>We will process your order shortly.<br>UPI Txn ID: <strong>'+txnId+'</strong></div><br><button class="btn" onclick="notifySeller(\''+msg+'\')">Notify Seller on WhatsApp</button><br><br><button class="btn" onclick="showPage(\'home\')">Continue Shopping</button>';
+  document.getElementById("successMsg").innerHTML='<div class="success-box">&#10003; <strong>Order Confirmed!</strong><br><br>Thank you, <strong>'+currentOrderDetails.name+'</strong>!<br>Your order worth <strong>Rs.'+currentOrderDetails.total+'</strong> has been placed.<br><br>We will process your order shortly.<br>UPI Txn ID: <strong>'+txnId+'</strong></div><br><button class="btn" onclick="showPage(\'home\')">Continue Shopping</button>';
   showPage("successPage");
 }
 
