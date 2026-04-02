@@ -39,14 +39,13 @@ body{margin:0;font-family:Poppins;background:#fff;}
 .upi-id{font-size:18px;font-weight:bold;color:#D4AF37;letter-spacing:1px;margin:10px 0;}
 .upi-amount{font-size:22px;font-weight:bold;color:#333;margin:10px 0;}
 .upi-steps{text-align:left;font-size:13px;color:#555;line-height:2;margin:15px 0;}
-.success-box{background:#e8f9ee;border:1px solid #25D366;border-radius:10px;padding:20px;margin:20px auto;max-width:400px;color:#1a7a3a;font-size:15px;}
 .sold-out-badge{position:absolute;top:10px;left:10px;background:#e74c3c;color:#fff;font-size:11px;font-weight:600;padding:4px 10px;border-radius:20px;letter-spacing:1px;z-index:10;}
 .stock-badge{position:absolute;top:10px;right:10px;background:#D4AF37;color:#fff;font-size:11px;font-weight:600;padding:4px 10px;border-radius:20px;z-index:10;}
 .card.sold-out img{opacity:0.5;filter:grayscale(60%);}
 .btn-sold{width:100%;padding:9px;background:#e74c3c;color:#fff;border:none;border-radius:6px;font-family:Poppins;font-size:13px;cursor:pointer;margin-top:6px;}
 .btn-sold:hover{background:#c0392b;}
 
-/* AUTH POPUP */
+/* AUTH */
 .auth-overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.55);z-index:3000;justify-content:center;align-items:center;padding:20px;}
 .auth-box{background:#fff;width:100%;max-width:420px;border-radius:20px;overflow:hidden;position:relative;}
 .auth-header{background:linear-gradient(135deg,#D4AF37,#f0c830);padding:32px 30px 24px;text-align:center;}
@@ -63,7 +62,6 @@ body{margin:0;font-family:Poppins;background:#fff;}
 .auth-submit{width:100%;padding:14px;background:#D4AF37;color:#fff;border:none;border-radius:10px;font-family:Poppins;font-size:15px;font-weight:500;cursor:pointer;transition:0.2s;margin-top:4px;}
 .auth-submit:hover{background:#c09b28;}
 .auth-close{position:absolute;top:14px;right:16px;background:rgba(255,255,255,0.3);border:none;color:#fff;width:28px;height:28px;border-radius:50%;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;}
-.auth-close:hover{background:rgba(255,255,255,0.5);}
 .auth-msg{padding:10px;border-radius:6px;font-size:13px;text-align:center;margin-top:12px;display:none;}
 .auth-msg.error{background:#fdecea;color:#c0392b;display:block;}
 .auth-msg.success{background:#e8f9ee;color:#1a7a3a;display:block;}
@@ -122,6 +120,8 @@ body{margin:0;font-family:Poppins;background:#fff;}
 .status-msg{margin-top:12px;padding:10px;border-radius:6px;font-size:13px;text-align:center;display:none;}
 .status-msg.success{background:#e8f9ee;color:#1a7a3a;display:block;}
 .status-msg.error{background:#fdecea;color:#c0392b;display:block;}
+
+/* MARQUEE & TRUST */
 .marquee-wrap{overflow:hidden;background:linear-gradient(135deg,#1a1a1a 0%,#2d2200 50%,#1a1a1a 100%);padding:18px 0;border-top:1px solid #D4AF37;border-bottom:1px solid #D4AF37;}
 .marquee-track{display:flex;gap:60px;animation:marquee 18s linear infinite;white-space:nowrap;width:max-content;}
 .marquee-track span{color:#D4AF37;font-size:14px;letter-spacing:3px;text-transform:uppercase;}
@@ -132,6 +132,8 @@ body{margin:0;font-family:Poppins;background:#fff;}
 .trust-badge .icon{width:38px;height:38px;background:#D4AF37;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;}
 .trust-badge strong{display:block;color:#222;font-size:13px;}
 .trust-badge span{font-size:11px;color:#888;}
+
+/* ADMIN */
 .admin-panel{background:#fff;border:2px solid #D4AF37;border-radius:16px;padding:30px;max-width:700px;margin:30px auto;}
 .admin-panel h2{font-family:'Playfair Display';color:#D4AF37;margin-bottom:20px;}
 .stock-row{display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid #f0e8d0;gap:10px;flex-wrap:wrap;}
@@ -143,9 +145,10 @@ body{margin:0;font-family:Poppins;background:#fff;}
 .restock-btn{padding:7px 16px;background:none;border:1px solid #27ae60;color:#27ae60;border-radius:20px;font-family:Poppins;font-size:12px;cursor:pointer;}
 .restock-btn:hover{background:#27ae60;color:#fff;}
 .restock-all-btn{padding:10px 24px;background:#D4AF37;color:#fff;border:none;border-radius:8px;font-family:Poppins;font-size:14px;cursor:pointer;margin-top:20px;}
-.restock-all-btn:hover{background:#c09b28;}
 .admin-login-box{max-width:380px;margin:60px auto;text-align:center;padding:0 20px;}
 .admin-login-box input{width:100%;padding:12px;margin:10px 0;border-radius:8px;border:1px solid #ddd;font-family:Poppins;font-size:14px;}
+
+/* NOTIFY */
 .notify-overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.6);z-index:2000;justify-content:center;align-items:center;}
 .notify-box{background:#fff;padding:30px;width:100%;max-width:380px;border-radius:16px;text-align:center;position:relative;}
 .notify-box h3{font-family:'Playfair Display';color:#D4AF37;margin-bottom:5px;}
@@ -157,6 +160,7 @@ body{margin:0;font-family:Poppins;background:#fff;}
 .notify-close{position:absolute;top:12px;right:16px;background:none;border:none;font-size:20px;cursor:pointer;color:#aaa;}
 .notify-success{background:#e8f9ee;color:#1a7a3a;border-radius:8px;padding:10px;font-size:13px;margin-top:10px;display:none;}
 
+/* RESPONSIVE */
 @media(max-width:768px){
   .nav{padding:15px 20px;flex-wrap:wrap;gap:10px;}
   .nav-links a{font-size:12px;padding:5px 8px;}
@@ -335,7 +339,7 @@ function renderProfile(){
           <button class="ptab" onclick="switchPTab('orders',this)">&#128722; Order History</button>
         </div>
         <div id="ptab-address">
-          <p style="font-size:13px;color:#aaa;margin:-8px 0 18px;">Saved address auto-fills at checkout so you don't retype every time.</p>
+          <p style="font-size:13px;color:#aaa;margin:-8px 0 18px;">Saved address auto-fills at checkout.</p>
           <div class="pfield"><label>Full Name</label><input id="pName" value="${esc(a.fullname||u.name||"")}"></div>
           <div class="pfield"><label>Phone</label><input id="pPhone" type="tel" value="${esc(a.phone||"")}"></div>
           <div class="pfield"><label>Address</label><input id="pAddress" value="${esc(a.address||"")}"></div>
@@ -364,14 +368,8 @@ function renderOrderHistory(u){
   if(orders.length===0)return`<div class="no-orders">&#128722; No orders yet.<br><span style="font-size:12px;margin-top:8px;display:block;">Your confirmed orders will appear here.</span></div>`;
   return orders.map(o=>`<div class="order-card">
     <div class="order-head">
-      <div>
-        <div style="font-size:14px;font-weight:600;color:#333;">Order #${o.id}</div>
-        <div style="font-size:12px;color:#aaa;">${o.date}</div>
-      </div>
-      <div style="text-align:right;">
-        <div class="order-status">&#10003; Confirmed</div>
-        <div class="order-total" style="margin-top:4px;">&#8377;${o.total}</div>
-      </div>
+      <div><div style="font-size:14px;font-weight:600;color:#333;">Order #${o.id}</div><div style="font-size:12px;color:#aaa;">${o.date}</div></div>
+      <div style="text-align:right;"><div class="order-status">&#10003; Confirmed</div><div class="order-total" style="margin-top:4px;">&#8377;${o.total}</div></div>
     </div>
     <div style="font-size:13px;color:#555;line-height:1.8;">${o.items}</div>
     <div style="font-size:12px;color:#ccc;margin-top:8px;">Txn: ${o.txnId}</div>
@@ -380,16 +378,9 @@ function renderOrderHistory(u){
 function saveAddress(){
   const email=getCurrentUser();if(!email)return;
   const u=getUserData(email);
-  u.address={
-    fullname:document.getElementById("pName").value.trim(),
-    phone:document.getElementById("pPhone").value.trim(),
-    address:document.getElementById("pAddress").value.trim(),
-    city:document.getElementById("pCity").value.trim(),
-    pincode:document.getElementById("pPincode").value.trim()
-  };
+  u.address={fullname:document.getElementById("pName").value.trim(),phone:document.getElementById("pPhone").value.trim(),address:document.getElementById("pAddress").value.trim(),city:document.getElementById("pCity").value.trim(),pincode:document.getElementById("pPincode").value.trim()};
   updateUserData(email,u);
-  const m=document.getElementById("addrSavedMsg");m.style.display="inline";
-  setTimeout(()=>m.style.display="none",2500);
+  const m=document.getElementById("addrSavedMsg");m.style.display="inline";setTimeout(()=>m.style.display="none",2500);
 }
 
 // ====== CART & PRODUCTS ======
@@ -402,7 +393,7 @@ function addToCart(name,price,image){
   if(f){f.qty++;}else{cart.push({name,price,image,qty:1});}
   updateCart();
   const btn=event.target;const orig=btn.innerText;
-  btn.innerText="Added ✓";btn.style.background="#D4AF37";btn.style.color="#fff";
+  btn.innerText="Added &#10003;";btn.style.background="#D4AF37";btn.style.color="#fff";
   setTimeout(()=>{btn.innerText=orig;btn.style.background="";btn.style.color="";},900);
 }
 
@@ -481,11 +472,12 @@ function proceedToUPI(){
 function confirmOrder(){
   const txnId=document.getElementById("txnInput").value.trim();
   if(!txnId){alert("Please enter your UPI Transaction ID");return;}
+
   let orderItemsText="";
   cart.forEach(i=>{orderItemsText+=i.name+" x "+i.qty+" = Rs."+i.price*i.qty+"\n";});
   cart.forEach(i=>{recordSale(i.name,i.qty);});
 
-  // Save order to account if logged in
+  // Save order to profile if logged in
   const email=getCurrentUser();
   if(email){
     const u=getUserData(email);
@@ -496,30 +488,61 @@ function confirmOrder(){
     updateUserData(email,u);
   }
 
+  // Send email
   emailjs.send("service_123456","template_xgijxrk",{
-    customer_name:currentOrderDetails.name,name:currentOrderDetails.name,phone:currentOrderDetails.phone,
+    customer_name:currentOrderDetails.name,name:currentOrderDetails.name,
+    phone:currentOrderDetails.phone,
     address:currentOrderDetails.address+", "+currentOrderDetails.city+" - "+currentOrderDetails.pincode,
-    order_items:orderItemsText,total:"Rs."+currentOrderDetails.total,txn_id:txnId,
-    email:"ahcollections355@gmail.com",to_email:"ahcollections355@gmail.com",
-    message:"Order from: "+currentOrderDetails.name+" | Items: "+orderItemsText+" | Total: Rs."+currentOrderDetails.total+" | Txn: "+txnId
+    order_items:orderItemsText,total:"Rs."+currentOrderDetails.total,
+    txn_id:txnId,email:"ahcollections355@gmail.com"
   }).then(()=>console.log("Email sent")).catch(e=>console.error(e));
 
+  // Build professional success UI
+  const orderLines=orderItemsText.split("\n").filter(l=>l.trim()).map(l=>{
+    const parts=l.split("=");
+    return '<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #f0e8d0;font-size:13px;"><span>'+parts[0]+'</span><span style="font-weight:500;color:#D4AF37;">'+(parts[1]||'')+'</span></div>';
+  }).join("");
+
   cart=[];updateCart();
-  document.getElementById("successMsg").innerHTML=`
-    <div class="success-box">&#10003; <strong>Order Confirmed!</strong><br><br>
-    Thank you, <strong>${currentOrderDetails.name}</strong>!<br>
-    Your order worth <strong>Rs.${currentOrderDetails.total}</strong> has been placed.<br><br>
-    UPI Txn ID: <strong>${txnId}</strong>
-    ${email?`<br><br><button class="btn" onclick="showPage('profilePage')">&#128722; View in Order History</button>`:""}
-    </div><br>
-    <button class="btn-ghost" onclick="showPage('home')">Continue Shopping</button>`;
+
+  document.getElementById("successMsg").innerHTML=
+    '<div style="max-width:480px;margin:0 auto;">'+
+    '<div style="text-align:center;margin-bottom:24px;">'+
+    '<div style="width:80px;height:80px;background:linear-gradient(135deg,#D4AF37,#f0c830);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;font-size:36px;">&#10003;</div>'+
+    '<h2 style="font-family:Playfair Display;color:#D4AF37;margin:0 0 6px;font-size:28px;">Order Confirmed!</h2>'+
+    '<p style="color:#888;font-size:14px;margin:0;">Thank you for shopping with AH Collections</p>'+
+    '</div>'+
+    '<div style="background:#fff;border:1px solid #f0e8d0;border-radius:16px;overflow:hidden;margin-bottom:16px;box-shadow:0 2px 12px rgba(212,175,55,0.08);">'+
+    '<div style="background:linear-gradient(135deg,#fffdf5,#fff8e1);padding:16px 20px;border-bottom:1px solid #f0e8d0;display:flex;justify-content:space-between;align-items:center;">'+
+    '<span style="font-size:12px;color:#aaa;text-transform:uppercase;letter-spacing:1px;">Order Summary</span>'+
+    '<span style="font-size:12px;background:#e8f9ee;color:#1a7a3a;padding:3px 10px;border-radius:20px;">&#10003; Confirmed</span>'+
+    '</div>'+
+    '<div style="padding:16px 20px;">'+orderLines+
+    '<div style="display:flex;justify-content:space-between;padding:12px 0 4px;font-size:16px;font-weight:600;"><span>Total Paid</span><span style="color:#D4AF37;">Rs.'+currentOrderDetails.total+'</span></div>'+
+    '</div></div>'+
+    '<div style="background:#fff;border:1px solid #f0e8d0;border-radius:16px;padding:16px 20px;margin-bottom:16px;box-shadow:0 2px 12px rgba(212,175,55,0.08);">'+
+    '<div style="font-size:12px;color:#aaa;text-transform:uppercase;letter-spacing:1px;margin-bottom:12px;">Delivery Details</div>'+
+    '<div style="display:flex;align-items:flex-start;gap:10px;margin-bottom:10px;"><span style="font-size:18px;">&#128100;</span><div><div style="font-size:14px;font-weight:500;">'+currentOrderDetails.name+'</div><div style="font-size:13px;color:#888;">'+currentOrderDetails.phone+'</div></div></div>'+
+    '<div style="display:flex;align-items:flex-start;gap:10px;margin-bottom:10px;"><span style="font-size:18px;">&#128205;</span><div style="font-size:13px;color:#666;line-height:1.5;">'+currentOrderDetails.address+', '+currentOrderDetails.city+' - '+currentOrderDetails.pincode+'</div></div>'+
+    '<div style="display:flex;align-items:center;gap:10px;"><span style="font-size:18px;">&#128179;</span><div><div style="font-size:11px;color:#aaa;">UPI Transaction ID</div><div style="font-size:13px;font-weight:500;color:#555;font-family:monospace;">'+txnId+'</div></div></div>'+
+    '</div>'+
+    '<div style="background:#fffdf5;border:1px solid #f0e8d0;border-radius:16px;padding:16px 20px;margin-bottom:24px;">'+
+    '<div style="font-size:12px;color:#aaa;text-transform:uppercase;letter-spacing:1px;margin-bottom:12px;">What happens next?</div>'+
+    '<div style="display:flex;align-items:flex-start;gap:10px;margin-bottom:10px;"><span style="width:24px;height:24px;background:#D4AF37;color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;flex-shrink:0;">1</span><span style="font-size:13px;color:#555;">We verify your payment and prepare your order</span></div>'+
+    '<div style="display:flex;align-items:flex-start;gap:10px;margin-bottom:10px;"><span style="width:24px;height:24px;background:#D4AF37;color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;flex-shrink:0;">2</span><span style="font-size:13px;color:#555;">Your order is packed and shipped within 1-2 days</span></div>'+
+    '<div style="display:flex;align-items:flex-start;gap:10px;"><span style="width:24px;height:24px;background:#D4AF37;color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;flex-shrink:0;">3</span><span style="font-size:13px;color:#555;">We contact you on WhatsApp with tracking details</span></div>'+
+    '</div>'+
+    '<div style="display:flex;gap:12px;flex-wrap:wrap;">'+
+    (email?'<button class="btn" onclick="showPage(\'profilePage\')" style="flex:1;min-width:140px;">&#128722; Order History</button>':'')+
+    '<button class="btn-primary" onclick="showPage(\'home\')" style="flex:1;min-width:140px;">Continue Shopping</button>'+
+    '</div></div>';
   showPage("successPage");
 }
 
 function openUpiApp(app){
-  const total=currentOrderDetails.total||0,upiId="yourupiid@upi",note="AHCollections+Order",name="AH+Collections";
+  const total=currentOrderDetails.total||0,upiId="yourupiid@upi",note="AHCollections+Order",pname="AH+Collections";
   const bases={gpay:"gpay://upi/pay",phonepe:"phonepe://pay",paytm:"paytmmp://pay",bhim:"upi://pay"};
-  window.location.href=(bases[app]||"upi://pay")+"?pa="+upiId+"&pn="+name+"&am="+total+"&cu=INR&tn="+note;
+  window.location.href=(bases[app]||"upi://pay")+"?pa="+upiId+"&pn="+pname+"&am="+total+"&cu=INR&tn="+note;
   setTimeout(()=>alert("Could not open "+app.toUpperCase()+". Please scan the QR code above."),1500);
 }
 
@@ -551,7 +574,7 @@ function sendCustomize(){
   const btn=document.getElementById("submitBtn");btn.disabled=true;btn.innerText="Sending...";
   let di="Not provided";if(imageUrl){di=imageUrl;}else if(uploadedFileBase64){di="Uploaded: "+uploadedFileName;}
   emailjs.send("service_123456","template_8f7s1ep",{customer_name:name,name,phone,colour:selectedColour,specs:specs||"None",design_image:di,message:"Name:"+name+"\nPhone:"+phone+"\nColour:"+selectedColour+"\nSpecs:"+(specs||"None")+"\nDesign:"+di,email:"ahcollections355@gmail.com",title:"Bangle Customization Request"})
-  .then(()=>{const m=document.getElementById("statusMsg");m.className="status-msg success";m.innerText="Request sent! We'll contact you soon.";btn.innerText="Sent ✓";setTimeout(()=>closeCustomize(),2500);})
+  .then(()=>{const m=document.getElementById("statusMsg");m.className="status-msg success";m.innerText="Request sent! We'll contact you soon.";btn.innerText="Sent &#10003;";setTimeout(()=>closeCustomize(),2500);})
   .catch(err=>{const m=document.getElementById("statusMsg");m.className="status-msg error";m.innerText="Failed: "+(err.text||err.message||JSON.stringify(err));btn.disabled=false;btn.innerText="Submit Request";});
 }
 
@@ -574,8 +597,8 @@ function checkAdminPassword(){const pw=document.getElementById("adminPwInput").v
 function renderAdminPanel(){
   let html="";
   ALL_PRODUCTS.forEach(p=>{
-    const rem=MAX_STOCK-getSoldCount(p.name);
-    let sc="ok",st=rem+" remaining";if(rem===0){sc="sold";st="Sold Out";}else if(rem===1){sc="low";st="Last 1";}
+    const rem=getStock(p.name);
+    let sc="ok",st=rem+" remaining";if(rem<=0){sc="sold";st="Sold Out";}else if(rem===1){sc="low";st="Last 1";}
     html+=`<div class="stock-row"><span class="sname">${p.name}</span><span class="sinfo ${sc}">${st}</span><button class="restock-btn" onclick="doRestock('${p.name}')">&#8635; Restock</button></div>`;
   });
   document.getElementById("stockList").innerHTML=html;
@@ -702,7 +725,6 @@ window.addEventListener("DOMContentLoaded",()=>{renderNav();});
 <!-- SUCCESS -->
 <div id="successPage" class="hidden">
   <div class="center-box">
-    <h2 style="font-family:'Playfair Display';">Thank You!</h2>
     <div id="successMsg"></div>
   </div>
 </div>
