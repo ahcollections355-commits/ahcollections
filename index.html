@@ -616,11 +616,27 @@ window.renderAdminPanel = function(){
   });
   document.getElementById("stockList").innerHTML=html;
 }
-window.restockItem = async function(name){await updateDoc(doc(db,"stock",name),{qty:2});alert(name+" restocked!");}
+window.restockItem = async function(name){
+  try{
+    await updateDoc(doc(db,"stock",name),{qty:2});
+    renderAdminPanel();
+    const rows=document.querySelectorAll(".stock-row");
+    rows.forEach(r=>{if(r.querySelector(".sname")&&r.querySelector(".sname").innerText===name){r.style.background="#e8f9ee";setTimeout(()=>r.style.background="",1500);}});
+  }catch(e){
+    console.error(e);
+    alert("Failed to restock. Please check Firebase rules.\nError: "+e.message);
+  }
+}
 window.restockAll = async function(){
   if(!confirm("Restock ALL items to 2?"))return;
-  for(const p of ALL_PRODUCTS){await updateDoc(doc(db,"stock",p.name),{qty:2});}
-  alert("All items restocked!");
+  try{
+    for(const p of ALL_PRODUCTS){await updateDoc(doc(db,"stock",p.name),{qty:2});}
+    renderAdminPanel();
+    alert("All items restocked successfully!");
+  }catch(e){
+    console.error(e);
+    alert("Failed to restock all. Please check Firebase rules.\nError: "+e.message);
+  }
 }
 
 window.addEventListener("DOMContentLoaded",async()=>{
