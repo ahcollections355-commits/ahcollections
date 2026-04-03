@@ -196,7 +196,13 @@ window.renderProfile = async function() {
   const ini=(u.name||currentUser.email||"U").charAt(0).toUpperCase();
   let ordersHtml=`<div class="no-orders">&#128722; No orders yet.<br><span style="font-size:12px;margin-top:8px;display:block;">Your confirmed orders will appear here.</span></div>`;
   try {
-    const oSnap=await getDocs(query(collection(db,"orders"),where("uid","==",currentUser.uid),orderBy("createdAt","desc")));
+    let oSnap;
+    try{
+      oSnap=await getDocs(query(collection(db,"orders"),where("uid","==",currentUser.uid),orderBy("createdAt","desc")));
+    }catch(indexErr){
+      // Fallback without orderBy if index not ready
+      oSnap=await getDocs(query(collection(db,"orders"),where("uid","==",currentUser.uid)));
+    }
     if(!oSnap.empty){
       ordersHtml=oSnap.docs.map(d=>{
         const o=d.data();
@@ -205,12 +211,12 @@ window.renderProfile = async function() {
             <div><div style="font-size:14px;font-weight:600;color:#333;">Order #${o.orderId}</div><div style="font-size:12px;color:#aaa;">${o.date}</div></div>
             <div style="text-align:right;"><div class="order-status">&#10003; Confirmed</div><div class="order-total" style="margin-top:4px;">&#8377;${o.total}</div></div>
           </div>
-          <div style="font-size:13px;color:#555;line-height:1.8;">${(o.items||'').replace(/\n/g,'<br>')}</div>
+          <div style="font-size:13px;color:#555;line-height:1.8;">${(o.items||'').replace(/\n/g,'<br>').replace(/<br>/g,'<br>')}</div>
           <div style="font-size:12px;color:#ccc;margin-top:8px;">Txn: ${o.txnId}</div>
         </div>`;
       }).join("");
     }
-  } catch(e){console.log(e);}
+  } catch(e){console.error('Orders error:',e);ordersHtml='<div style="padding:20px;color:#e74c3c;font-size:13px;">Could not load orders. Error: '+e.message+'</div>';}
 
   document.getElementById("profilePage").innerHTML=`
     <div class="profile-wrap">
@@ -406,14 +412,7 @@ function renderCategory(name){
   el.innerHTML=content; el.setAttribute("data-cat",name);
 }
 
-window.openCategory = function(name){
-  // Highlight selected category card
-  document.querySelectorAll(".cat-card").forEach(c=>{
-    c.classList.remove("cat-active");
-    if(c.getAttribute("data-cat")===name) c.classList.add("cat-active");
-  });
-  renderCategory(name);showPage("products");
-}
+window.openCategory = function(name){renderCategory(name);showPage("products");}
 
 // ── CART PAGE ──
 window.showCart = function(){
@@ -494,7 +493,7 @@ window.confirmOrder = async function(){
       uid:currentUser.uid,orderId,date:now,
       name:currentOrderDetails.name,phone:currentOrderDetails.phone,
       address:currentOrderDetails.address+", "+currentOrderDetails.city+" - "+currentOrderDetails.pincode,
-      items:orderItemsText.replace(/\n/g,"<br>"),total:currentOrderDetails.total,txnId,createdAt:serverTimestamp()
+      items:orderItemsText,total:currentOrderDetails.total,txnId,createdAt:serverTimestamp()
     });
   }
 
@@ -851,14 +850,14 @@ body{margin:0;font-family:Poppins;background:#fff;}
   .detail-layout{gap:24px;}
 }
 
-/* CATEGORY CARD ACTIVE */
-.cat-card{transition:0.25s;}
-.cat-card.cat-active{
+/* CATEGORY CARD HOVER ONLY */
+.cat-card{transition:0.25s;cursor:pointer;}
+.cat-card:hover{
   border:2px solid #D4AF37 !important;
   box-shadow:0 0 0 4px rgba(212,175,55,0.15), 0 4px 20px rgba(212,175,55,0.25) !important;
   transform:scale(1.04) !important;
 }
-.cat-card.cat-active p{color:#D4AF37;font-weight:600;}
+.cat-card:hover p{color:#D4AF37;font-weight:600;}
 </style>
 </head>
 <body>
