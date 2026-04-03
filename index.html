@@ -205,7 +205,7 @@ window.renderProfile = async function() {
             <div><div style="font-size:14px;font-weight:600;color:#333;">Order #${o.orderId}</div><div style="font-size:12px;color:#aaa;">${o.date}</div></div>
             <div style="text-align:right;"><div class="order-status">&#10003; Confirmed</div><div class="order-total" style="margin-top:4px;">&#8377;${o.total}</div></div>
           </div>
-          <div style="font-size:13px;color:#555;line-height:1.8;">${o.items}</div>
+          <div style="font-size:13px;color:#555;line-height:1.8;">${(o.items||'').replace(/\n/g,'<br>')}</div>
           <div style="font-size:12px;color:#ccc;margin-top:8px;">Txn: ${o.txnId}</div>
         </div>`;
       }).join("");
@@ -310,13 +310,13 @@ window.openProductDetail = function(name) {
               <span style="color:#aaa;display:block;font-size:11px;margin-bottom:2px;">MATERIAL</span>
               <span style="color:#555;">Gold Plated</span>
             </div>
-            <div style="background:#fffdf5;border:1px solid #f0e8d0;border-radius:8px;padding:10px 16px;font-size:13px;">
+            ${(isSoldOut||qty===1)?`<div style="background:#fffdf5;border:1px solid #f0e8d0;border-radius:8px;padding:10px 16px;font-size:13px;">
               <span style="color:#aaa;display:block;font-size:11px;margin-bottom:2px;">STOCK</span>
-              <span style="color:${isSoldOut?'#e74c3c':qty===1?'#e67e22':'#27ae60'};font-weight:600;">${isSoldOut?'Sold Out':qty===1?'Last 1!':qty+' Available'}</span>
-            </div>
+              <span style="color:${isSoldOut?'#e74c3c':'#e67e22'};font-weight:600;">${isSoldOut?'Sold Out':'Last 1!'}</span>
+            </div>`:""}
             <div style="background:#fffdf5;border:1px solid #f0e8d0;border-radius:8px;padding:10px 16px;font-size:13px;">
               <span style="color:#aaa;display:block;font-size:11px;margin-bottom:2px;">DELIVERY</span>
-              <span style="color:#555;">1-2 Days</span>
+              <span style="color:#555;">3-4 Days</span>
             </div>
           </div>
 
@@ -406,7 +406,14 @@ function renderCategory(name){
   el.innerHTML=content; el.setAttribute("data-cat",name);
 }
 
-window.openCategory = function(name){renderCategory(name);showPage("products");}
+window.openCategory = function(name){
+  // Highlight selected category card
+  document.querySelectorAll(".cat-card").forEach(c=>{
+    c.classList.remove("cat-active");
+    if(c.getAttribute("data-cat")===name) c.classList.add("cat-active");
+  });
+  renderCategory(name);showPage("products");
+}
 
 // ── CART PAGE ──
 window.showCart = function(){
@@ -533,7 +540,7 @@ window.confirmOrder = async function(){
     '<div style="background:#fffdf5;border:1px solid #f0e8d0;border-radius:16px;padding:16px 20px;margin-bottom:24px;">'+
     '<div style="font-size:12px;color:#aaa;text-transform:uppercase;letter-spacing:1px;margin-bottom:12px;">What happens next?</div>'+
     '<div style="display:flex;align-items:flex-start;gap:10px;margin-bottom:10px;"><span style="width:24px;height:24px;background:#D4AF37;color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;flex-shrink:0;">1</span><span style="font-size:13px;color:#555;">We verify your payment and prepare your order</span></div>'+
-    '<div style="display:flex;align-items:flex-start;gap:10px;margin-bottom:10px;"><span style="width:24px;height:24px;background:#D4AF37;color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;flex-shrink:0;">2</span><span style="font-size:13px;color:#555;">Your order is packed and shipped within 1-2 days</span></div>'+
+    '<div style="display:flex;align-items:flex-start;gap:10px;margin-bottom:10px;"><span style="width:24px;height:24px;background:#D4AF37;color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;flex-shrink:0;">2</span><span style="font-size:13px;color:#555;">Your order is packed and shipped within 3-4 days</span></div>'+
     '<div style="display:flex;align-items:flex-start;gap:10px;"><span style="width:24px;height:24px;background:#D4AF37;color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;flex-shrink:0;">3</span><span style="font-size:13px;color:#555;">We contact you on WhatsApp with tracking details</span></div>'+
     '</div>'+
     '<div style="display:flex;gap:12px;flex-wrap:wrap;">'+
@@ -843,6 +850,15 @@ body{margin:0;font-family:Poppins;background:#fff;}
   .hero img{width:300px!important;}
   .detail-layout{gap:24px;}
 }
+
+/* CATEGORY CARD ACTIVE */
+.cat-card{transition:0.25s;}
+.cat-card.cat-active{
+  border:2px solid #D4AF37 !important;
+  box-shadow:0 0 0 4px rgba(212,175,55,0.15), 0 4px 20px rgba(212,175,55,0.25) !important;
+  transform:scale(1.04) !important;
+}
+.cat-card.cat-active p{color:#D4AF37;font-weight:600;}
 </style>
 </head>
 <body>
@@ -884,10 +900,10 @@ body{margin:0;font-family:Poppins;background:#fff;}
   </div>
   <h2 style="text-align:center;font-family:'Playfair Display';">Our Collections</h2>
   <div class="grid">
-    <div class="card" onclick="openCategory('Chains')"><img src="chaindisplay.jpeg"><p>Chains</p></div>
-    <div class="card" onclick="openCategory('Bracelets')"><img src="braceletdisplay.jpeg"><p>Bracelets</p></div>
-    <div class="card" onclick="openCategory('Earrings')"><img src="earringsdisplay.jpeg"><p>Earrings</p></div>
-    <div class="card" onclick="openCategory('Bangles')"><img src="banglesdisplay.jpeg"><p>Bangles</p></div>
+    <div class="card cat-card" data-cat="Chains" onclick="openCategory('Chains')"><img src="chaindisplay.jpeg"><p>Chains</p></div>
+    <div class="card cat-card" data-cat="Bracelets" onclick="openCategory('Bracelets')"><img src="braceletdisplay.jpeg"><p>Bracelets</p></div>
+    <div class="card cat-card" data-cat="Earrings" onclick="openCategory('Earrings')"><img src="earringsdisplay.jpeg"><p>Earrings</p></div>
+    <div class="card cat-card" data-cat="Bangles" onclick="openCategory('Bangles')"><img src="banglesdisplay.jpeg"><p>Bangles</p></div>
   </div>
 </div>
 
@@ -896,10 +912,10 @@ body{margin:0;font-family:Poppins;background:#fff;}
   <button class="btn-ghost" onclick="showPage('home')" style="margin:20px;">&#8592; Back</button>
   <h2 style="text-align:center;font-family:'Playfair Display';">Collections</h2>
   <div class="grid">
-    <div class="card" onclick="openCategory('Chains')"><img src="chaindisplay.jpeg"><p>Chains</p></div>
-    <div class="card" onclick="openCategory('Bracelets')"><img src="braceletdisplay.jpeg"><p>Bracelets</p></div>
-    <div class="card" onclick="openCategory('Earrings')"><img src="earringsdisplay.jpeg"><p>Earrings</p></div>
-    <div class="card" onclick="openCategory('Bangles')"><img src="banglesdisplay.jpeg"><p>Bangles</p></div>
+    <div class="card cat-card" data-cat="Chains" onclick="openCategory('Chains')"><img src="chaindisplay.jpeg"><p>Chains</p></div>
+    <div class="card cat-card" data-cat="Bracelets" onclick="openCategory('Bracelets')"><img src="braceletdisplay.jpeg"><p>Bracelets</p></div>
+    <div class="card cat-card" data-cat="Earrings" onclick="openCategory('Earrings')"><img src="earringsdisplay.jpeg"><p>Earrings</p></div>
+    <div class="card cat-card" data-cat="Bangles" onclick="openCategory('Bangles')"><img src="banglesdisplay.jpeg"><p>Bangles</p></div>
   </div>
 </div>
 
