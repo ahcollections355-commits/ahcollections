@@ -34,6 +34,10 @@ const RAZORPAY_KEY_ID = "rzp_test_SYubgFBZsAPOAu";
 const CREATE_ORDER_URL = "https://createorder-qhvjtgjmaq-uc.a.run.app";
 const VERIFY_PAYMENT_URL = "https://verifypayment-qhvjtgjmaq-uc.a.run.app";
 
+// ── DELIVERY CONFIG ──
+const DELIVERY_CHARGE = 80;
+const FREE_DELIVERY_ABOVE = 999;
+
 const ALL_PRODUCTS = [
   {name:"Flower Chain",price:399,image:"chain1.jpeg",cat:"Chains",desc:"Elegant gold flower chain with 3 daisy pendants. Perfect for everyday wear."},
   {name:"Bow Heart Chain",price:499,image:"chain2.jpg",cat:"Chains",desc:"Delicate bow pendant with a heart drop. A romantic and stylish choice."},
@@ -379,7 +383,7 @@ window.openCategory = function(name){renderCategory(name);showPage("products");}
 
 // ── CART PAGE ──
 window.showCart = function(){
-  let html="";let total=0;
+  let html=""; let total=0;
   cart.forEach((i,idx)=>{
     total+=i.price*i.qty;
     html+=`<div class="cart-item">
@@ -393,11 +397,33 @@ window.showCart = function(){
       <p style="min-width:70px;font-weight:500;">&#8377;${i.price*i.qty}</p>
     </div>`;
   });
-  if(cart.length===0){html=`<div style="padding:40px;color:#aaa;text-align:center;"><div style="font-size:40px;">&#128722;</div>Your cart is empty.<br><button class="btn" onclick="showPage('shop')" style="margin-top:16px;">Shop Now</button></div>`;}
-  else{html+=`<div style="border-top:1px solid #f0e8d0;margin-top:10px;padding-top:16px;"><h3 style="margin:0 0 16px;">Total &#8377;${total}</h3><button class="btn-primary" onclick="goToCheckout()">Proceed to Checkout &#10145;</button></div>`;}
+  if(cart.length===0){
+    html=`<div style="padding:40px;color:#aaa;text-align:center;"><div style="font-size:40px;">&#128722;</div>Your cart is empty.<br><button class="btn" onclick="showPage('shop')" style="margin-top:16px;">Shop Now</button></div>`;
+  } else {
+    const delivery = total >= FREE_DELIVERY_ABOVE ? 0 : DELIVERY_CHARGE;
+    const grandTotal = total + delivery;
+    const amountLeft = FREE_DELIVERY_ABOVE - total;
+    html += `<div style="border-top:1px solid #f0e8d0;margin-top:10px;padding-top:16px;">
+      <div style="display:flex;justify-content:space-between;margin-bottom:8px;font-size:14px;color:#555;">
+        <span>Subtotal</span><span>&#8377;${total}</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;margin-bottom:8px;font-size:14px;color:${delivery===0?'#1a7a3a':'#e67e22'};">
+        <span>${delivery===0?'🎉 Free Delivery':'Delivery Charge'}</span>
+        <span>${delivery===0?'FREE':'&#8377;'+delivery}</span>
+      </div>
+      ${delivery>0?`<div style="background:#fff8e1;border:1px solid #f0e8d0;border-radius:8px;padding:8px 12px;margin-bottom:12px;font-size:12px;color:#b8860b;">
+        🛍️ Add &#8377;${amountLeft} more for FREE delivery!
+      </div>`:''}
+      <div style="display:flex;justify-content:space-between;margin-bottom:16px;font-size:17px;font-weight:600;border-top:1px solid #f0e8d0;padding-top:10px;">
+        <span>Total</span><span style="color:#D4AF37;">&#8377;${grandTotal}</span>
+      </div>
+      <button class="btn-primary" onclick="goToCheckout(${grandTotal},${delivery})" style="width:100%;">Proceed to Checkout &#10145;</button>
+    </div>`;
+  }
   document.getElementById("cartItems").innerHTML=html;
   showPage("cartPage");
 }
+
 window.increaseQty = function(i){
   const item=cart[i]; const maxStock=stockData[item.name]!==undefined?stockData[item.name]:2;
   if(item.qty>=maxStock){alert("Only "+maxStock+" piece(s) available.");return;}
@@ -406,8 +432,11 @@ window.increaseQty = function(i){
 window.decreaseQty = function(i){if(cart[i].qty>1){cart[i].qty--;}else{cart.splice(i,1);}showCart();updateCart();}
 
 // ── CHECKOUT — auto fills saved address ──
-window.goToCheckout = async function(){
+window.goToCheckout = async function(grandTotal, delivery){
   showPage("checkout");
+  // Store delivery info for payment
+  window._checkoutTotal = grandTotal;
+  window._checkoutDelivery = delivery;
   if(currentUser){
     const uSnap=await getDoc(doc(db,"users",currentUser.uid));
     const u=uSnap.data()||{};const a=u.address||{};
@@ -417,6 +446,14 @@ window.goToCheckout = async function(){
       sv("co-address",a.address||"");sv("co-city",a.city||"");sv("co-pincode",a.pincode||"");
     },100);
   }
+  // Show order summary in checkout
+  const subtotal = grandTotal - (delivery||0);
+  document.getElementById("checkoutSummary").innerHTML = `
+    <div style="background:#fffdf5;border:1px solid #f0e8d0;border-radius:10px;padding:14px;margin-bottom:16px;font-size:14px;">
+      <div style="display:flex;justify-content:space-between;margin-bottom:6px;color:#555;"><span>Subtotal</span><span>&#8377;${subtotal}</span></div>
+      <div style="display:flex;justify-content:space-between;margin-bottom:6px;color:${delivery===0?'#1a7a3a':'#e67e22'};"><span>${delivery===0?'🎉 Free Delivery':'Delivery'}</span><span>${delivery===0?'FREE':'&#8377;'+delivery}</span></div>
+      <div style="display:flex;justify-content:space-between;font-weight:600;font-size:16px;border-top:1px solid #f0e8d0;padding-top:8px;margin-top:6px;"><span>Total</span><span style="color:#D4AF37;">&#8377;${grandTotal}</span></div>
+    </div>`;
 }
 
 window.proceedToPayment = async function(){
@@ -428,15 +465,14 @@ window.proceedToPayment = async function(){
   if(!name||!phone||!address||!city||!pincode){alert("Please fill all details");return;}
   if(phone.length<10){alert("Please enter a valid 10-digit phone number");return;}
 
-  const total=cart.reduce((s,i)=>s+(i.price*i.qty),0);
-  currentOrderDetails={name,phone,address,city,pincode,total};
+  const total = window._checkoutTotal || cart.reduce((s,i)=>s+(i.price*i.qty),0);
+  const delivery = window._checkoutDelivery || 0;
+  currentOrderDetails={name,phone,address,city,pincode,total,delivery};
 
-  // Show loading
   const btn=document.getElementById("payBtn");
   btn.disabled=true; btn.innerText="Opening Payment...";
 
   try {
-    // Step 1: Create Razorpay order via Firebase Function
     const res=await fetch(CREATE_ORDER_URL,{
       method:"POST",
       headers:{"Content-Type":"application/json"},
@@ -445,7 +481,6 @@ window.proceedToPayment = async function(){
     const order=await res.json();
     if(!order.orderId){throw new Error("Could not create order");}
 
-    // Step 2: Open Razorpay checkout popup
     const options={
       key: RAZORPAY_KEY_ID,
       amount: order.amount,
@@ -466,7 +501,6 @@ window.proceedToPayment = async function(){
         }
       },
       handler: async function(response){
-        // Step 3: Verify payment via Firebase Function
         try {
           const verifyRes=await fetch(VERIFY_PAYMENT_URL,{
             method:"POST",
@@ -484,7 +518,6 @@ window.proceedToPayment = async function(){
             alert("Payment verification failed. Please contact us with your payment ID: "+response.razorpay_payment_id);
           }
         } catch(e){
-          // If verification call fails, still complete order (payment was successful)
           await onPaymentSuccess(response.razorpay_payment_id, response.razorpay_order_id);
         }
       }
@@ -501,15 +534,15 @@ window.proceedToPayment = async function(){
 async function onPaymentSuccess(paymentId, razorpayOrderId){
   let orderItemsText="";
   cart.forEach(i=>{orderItemsText+=i.name+" x "+i.qty+" = Rs."+i.price*i.qty+"\n";});
+  const delivery = currentOrderDetails.delivery || 0;
+  if(delivery>0) orderItemsText += "Delivery Charge = Rs."+delivery+"\n";
 
-  // Update stock in Firebase
   for(const i of cart){
     const ref=doc(db,"stock",i.name);
     const snap=await getDoc(ref);
     if(snap.exists()){await updateDoc(ref,{qty:Math.max(0,snap.data().qty-i.qty)});}
   }
 
-  // Save order to Firebase
   const orderId="AH"+Date.now().toString().slice(-6);
   const now=new Date().toLocaleDateString("en-IN",{day:"2-digit",month:"short",year:"numeric"});
   if(currentUser){
@@ -518,11 +551,11 @@ async function onPaymentSuccess(paymentId, razorpayOrderId){
       name:currentOrderDetails.name, phone:currentOrderDetails.phone,
       address:currentOrderDetails.address+", "+currentOrderDetails.city+" - "+currentOrderDetails.pincode,
       items:orderItemsText, total:currentOrderDetails.total,
+      delivery: delivery,
       paymentId, razorpayOrderId, createdAt:serverTimestamp()
     });
   }
 
-  // Send email
   emailjs.send("service_123456","template_xgijxrk",{
     customer_name:currentOrderDetails.name, name:currentOrderDetails.name,
     phone:currentOrderDetails.phone,
@@ -531,7 +564,6 @@ async function onPaymentSuccess(paymentId, razorpayOrderId){
     txn_id:paymentId, email:"ahcollections355@gmail.com"
   }).then(()=>console.log("Email sent")).catch(e=>console.error(e));
 
-  // Build success page
   const orderLines=orderItemsText.split("\n").filter(l=>l.trim()).map(l=>{
     const parts=l.split("=");
     return '<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #f0e8d0;font-size:13px;"><span>'+parts[0]+'</span><span style="font-weight:500;color:#D4AF37;">'+(parts[1]||'')+'</span></div>';
@@ -918,13 +950,13 @@ body{margin:0;font-family:Poppins;background:#fff;}
     <button class="btn-ghost" onclick="showCart()" style="margin-bottom:16px;">&#8592; Back</button>
     <h2 style="font-family:'Playfair Display';">Delivery Details</h2>
     <p style="font-size:13px;color:#aaa;margin:-8px 0 16px;">Saved address auto-fills below if you're logged in.</p>
+    <div id="checkoutSummary"></div>
     <input id="co-name" class="fi" placeholder="Full Name">
     <input id="co-phone" class="fi" type="tel" placeholder="Phone Number (10 digits)" maxlength="10" oninput="this.value=this.value.replace(/\D/g,'')">
     <input id="co-address" class="fi" placeholder="Address">
     <input id="co-city" class="fi" placeholder="City">
     <input id="co-pincode" class="fi" type="tel" placeholder="Pincode" maxlength="6" oninput="this.value=this.value.replace(/\D/g,'')">
     <br>
-    <!-- Razorpay Pay Button -->
     <button id="payBtn" class="btn-primary" onclick="proceedToPayment()" style="margin-top:15px;width:100%;font-size:16px;padding:16px;">
       &#128274; Pay Securely with Razorpay
     </button>
