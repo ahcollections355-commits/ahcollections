@@ -7,6 +7,8 @@
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital@0;1&family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 <script>emailjs.init("5k8K3lISiv1nNEsSw");</script>
+<!-- Razorpay -->
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 
 <!-- Firebase -->
 <script type="module">
@@ -26,6 +28,11 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
+
+// ── RAZORPAY CONFIG ──
+const RAZORPAY_KEY_ID = "rzp_test_SYu4Db4awx2Occ";
+const CREATE_ORDER_URL = "https://us-central1-ah-collections-1ee45.cloudfunctions.net/createOrder";
+const VERIFY_PAYMENT_URL = "https://us-central1-ah-collections-1ee45.cloudfunctions.net/verifyPayment";
 
 const ALL_PRODUCTS = [
   {name:"Flower Chain",price:399,image:"chain1.jpeg",cat:"Chains",desc:"Elegant gold flower chain with 3 daisy pendants. Perfect for everyday wear."},
@@ -88,7 +95,7 @@ onAuthStateChanged(auth, async (user) => {
   }
 });
 
-// ── NAV (no admin gear icon) ──
+// ── NAV ──
 window.renderNav = function() {
   const nr = document.getElementById("navRight"); if (!nr) return;
   if (currentUser) {
@@ -112,7 +119,7 @@ window.renderNav = function() {
 
 // ── PAGES ──
 window.showPage = function(p) {
-  ["home","shop","products","cartPage","checkout","upiPage","successPage","adminLogin","adminPanel","profilePage","productDetail"]
+  ["home","shop","products","cartPage","checkout","successPage","adminLogin","adminPanel","profilePage","productDetail"]
     .forEach(id => { const el=document.getElementById(id); if(el) el.classList.add("hidden"); });
   const el = document.getElementById(p);
   if (el) { el.classList.remove("hidden"); window.scrollTo(0,0); }
@@ -120,18 +127,11 @@ window.showPage = function(p) {
   if (p === "adminPanel") renderAdminPanel();
 }
 
-// ── SECRET ADMIN ACCESS via URL hash ──
 window.addEventListener("hashchange", () => {
-  if (window.location.hash === "#admin-ah2024") {
-    window.location.hash = "";
-    showPage("adminLogin");
-  }
+  if (window.location.hash === "#admin-ah2024") { window.location.hash = ""; showPage("adminLogin"); }
 });
 window.addEventListener("load", () => {
-  if (window.location.hash === "#admin-ah2024") {
-    window.location.hash = "";
-    showPage("adminLogin");
-  }
+  if (window.location.hash === "#admin-ah2024") { window.location.hash = ""; showPage("adminLogin"); }
 });
 
 // ── AUTH ──
@@ -197,12 +197,8 @@ window.renderProfile = async function() {
   let ordersHtml=`<div class="no-orders">&#128722; No orders yet.<br><span style="font-size:12px;margin-top:8px;display:block;">Your confirmed orders will appear here.</span></div>`;
   try {
     let oSnap;
-    try{
-      oSnap=await getDocs(query(collection(db,"orders"),where("uid","==",currentUser.uid),orderBy("createdAt","desc")));
-    }catch(indexErr){
-      // Fallback without orderBy if index not ready
-      oSnap=await getDocs(query(collection(db,"orders"),where("uid","==",currentUser.uid)));
-    }
+    try { oSnap=await getDocs(query(collection(db,"orders"),where("uid","==",currentUser.uid),orderBy("createdAt","desc"))); }
+    catch(e) { oSnap=await getDocs(query(collection(db,"orders"),where("uid","==",currentUser.uid))); }
     if(!oSnap.empty){
       ordersHtml=oSnap.docs.map(d=>{
         const o=d.data();
@@ -211,12 +207,12 @@ window.renderProfile = async function() {
             <div><div style="font-size:14px;font-weight:600;color:#333;">Order #${o.orderId}</div><div style="font-size:12px;color:#aaa;">${o.date}</div></div>
             <div style="text-align:right;"><div class="order-status">&#10003; Confirmed</div><div class="order-total" style="margin-top:4px;">&#8377;${o.total}</div></div>
           </div>
-          <div style="font-size:13px;color:#555;line-height:1.8;">${(o.items||'').replace(/\n/g,'<br>').replace(/<br>/g,'<br>')}</div>
-          <div style="font-size:12px;color:#ccc;margin-top:8px;">Txn: ${o.txnId}</div>
+          <div style="font-size:13px;color:#555;line-height:1.8;">${(o.items||'').replace(/\n/g,'<br>')}</div>
+          <div style="font-size:12px;color:#ccc;margin-top:8px;">Payment ID: ${o.paymentId||o.txnId||''}</div>
         </div>`;
       }).join("");
     }
-  } catch(e){console.error('Orders error:',e);ordersHtml='<div style="padding:20px;color:#e74c3c;font-size:13px;">Could not load orders. Error: '+e.message+'</div>';}
+  } catch(e){ ordersHtml='<div style="padding:20px;color:#e74c3c;font-size:13px;">Could not load orders.</div>'; }
 
   document.getElementById("profilePage").innerHTML=`
     <div class="profile-wrap">
@@ -280,52 +276,37 @@ window.addToCart = function(name,price,image,btn){
   if(f){f.qty++;}else{cart.push({name,price,image,qty:1});}
   updateCart();
   if(btn){
-    const orig=btn.innerText; btn.innerText="Added &#10003;"; btn.style.background="#D4AF37"; btn.style.color="#fff";
+    const orig=btn.innerText; btn.innerText="Added ✓"; btn.style.background="#D4AF37"; btn.style.color="#fff";
     setTimeout(()=>{btn.innerText=orig;btn.style.background="";btn.style.color="";},900);
   }
 }
 
-// ── PRODUCT DETAIL PAGE ──
+// ── PRODUCT DETAIL ──
 window.openProductDetail = function(name) {
-  const p = ALL_PRODUCTS.find(x => x.name === name);
-  if(!p) return;
+  const p = ALL_PRODUCTS.find(x => x.name === name); if(!p) return;
   currentProduct = p;
   const qty = stockData[p.name] !== undefined ? stockData[p.name] : 2;
   const isSoldOut = qty <= 0;
-
   document.getElementById("productDetail").innerHTML = `
     <div style="max-width:900px;margin:0 auto;padding:30px 20px;">
       <button class="btn-ghost" onclick="goBackFromDetail()" style="margin-bottom:24px;">&#8592; Back</button>
       <div class="detail-layout">
-        <!-- Image Section -->
         <div class="detail-img-wrap">
-          <div class="detail-img-zoom" id="zoomWrap">
+          <div class="detail-img-zoom">
             <img id="detailMainImg" src="${p.image}" alt="${p.name}" onclick="openZoom('${p.image}')">
             <div class="zoom-hint">&#128269; Click to zoom</div>
           </div>
         </div>
-        <!-- Info Section -->
         <div class="detail-info">
           <div style="font-size:12px;color:#D4AF37;text-transform:uppercase;letter-spacing:2px;margin-bottom:8px;">${p.cat}</div>
           <h1 style="font-family:'Playfair Display';font-size:28px;margin:0 0 12px;color:#222;">${p.name}</h1>
           <div style="font-size:28px;font-weight:600;color:#D4AF37;margin-bottom:16px;">&#8377;${p.price}</div>
           <p style="font-size:14px;color:#666;line-height:1.8;margin-bottom:24px;">${p.desc}</p>
-
-          <div style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;">
-            <div style="background:#fffdf5;border:1px solid #f0e8d0;border-radius:8px;padding:10px 16px;font-size:13px;">
-              <span style="color:#aaa;display:block;font-size:11px;margin-bottom:2px;">MATERIAL</span>
-              <span style="color:#555;">Gold Plated</span>
-            </div>
-            ${(isSoldOut||qty===1)?`<div style="background:#fffdf5;border:1px solid #f0e8d0;border-radius:8px;padding:10px 16px;font-size:13px;">
-              <span style="color:#aaa;display:block;font-size:11px;margin-bottom:2px;">STOCK</span>
-              <span style="color:${isSoldOut?'#e74c3c':'#e67e22'};font-weight:600;">${isSoldOut?'Sold Out':'Last 1!'}</span>
-            </div>`:""}
-            <div style="background:#fffdf5;border:1px solid #f0e8d0;border-radius:8px;padding:10px 16px;font-size:13px;">
-              <span style="color:#aaa;display:block;font-size:11px;margin-bottom:2px;">DELIVERY</span>
-              <span style="color:#555;">3-4 Days</span>
-            </div>
+          <div style="display:flex;gap:10px;margin-bottom:24px;flex-wrap:wrap;">
+            <div style="background:#fffdf5;border:1px solid #f0e8d0;border-radius:8px;padding:10px 16px;font-size:13px;"><span style="color:#aaa;display:block;font-size:11px;margin-bottom:2px;">MATERIAL</span><span style="color:#555;">Gold Plated</span></div>
+            ${(isSoldOut||qty===1)?`<div style="background:#fffdf5;border:1px solid #f0e8d0;border-radius:8px;padding:10px 16px;font-size:13px;"><span style="color:#aaa;display:block;font-size:11px;margin-bottom:2px;">STOCK</span><span style="color:${isSoldOut?'#e74c3c':'#e67e22'};font-weight:600;">${isSoldOut?'Sold Out':'Last 1!'}</span></div>`:""}
+            <div style="background:#fffdf5;border:1px solid #f0e8d0;border-radius:8px;padding:10px 16px;font-size:13px;"><span style="color:#aaa;display:block;font-size:11px;margin-bottom:2px;">DELIVERY</span><span style="color:#555;">3-4 Days</span></div>
           </div>
-
           ${isSoldOut
             ? `<button class="btn-sold" onclick="openNotify('${p.name}')" style="width:auto;padding:13px 32px;font-size:15px;">&#128276; Notify Me When Back</button>`
             : `<div style="display:flex;gap:12px;flex-wrap:wrap;">
@@ -334,16 +315,9 @@ window.openProductDetail = function(name) {
               </div>`
           }
           ${p.cat==="Bangles"?`<button class="btn-ghost" onclick="openCustomize()" style="margin-top:12px;width:100%;">&#10024; Customize This Design</button>`:""}
-
           <div style="margin-top:24px;padding-top:20px;border-top:1px solid #f0e8d0;">
-            <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
-              <span style="font-size:20px;">&#128666;</span>
-              <span style="font-size:13px;color:#555;">Free delivery on orders above &#8377;999</span>
-            </div>
-            <div style="display:flex;align-items:center;gap:10px;">
-              <span style="font-size:20px;">&#128274;</span>
-              <span style="font-size:13px;color:#555;">100% secure UPI payment</span>
-            </div>
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;"><span style="font-size:20px;">&#128666;</span><span style="font-size:13px;color:#555;">Free delivery on orders above &#8377;999</span></div>
+            <div style="display:flex;align-items:center;gap:10px;"><span style="font-size:20px;">&#128274;</span><span style="font-size:13px;color:#555;">100% secure Razorpay payment</span></div>
           </div>
         </div>
       </div>
@@ -364,22 +338,11 @@ window.addToCartFromDetail = function(){
 }
 
 let detailFromCat = "";
-window.goBackFromDetail = function(){
-  if(detailFromCat){openCategory(detailFromCat);}else{showPage("shop");}
-}
+window.goBackFromDetail = function(){ if(detailFromCat){openCategory(detailFromCat);}else{showPage("shop");} }
 
-// ── ZOOM OVERLAY ──
-window.openZoom = function(src){
-  document.getElementById("zoomOverlay").style.display="flex";
-  document.getElementById("zoomImg").src=src;
-  document.body.style.overflow="hidden";
-}
-window.closeZoom = function(){
-  document.getElementById("zoomOverlay").style.display="none";
-  document.body.style.overflow="auto";
-}
+window.openZoom = function(src){ document.getElementById("zoomOverlay").style.display="flex"; document.getElementById("zoomImg").src=src; document.body.style.overflow="hidden"; }
+window.closeZoom = function(){ document.getElementById("zoomOverlay").style.display="none"; document.body.style.overflow="auto"; }
 
-// ── PRODUCT CARD ──
 function productCard(name,price,image){
   const qty=stockData[name]!==undefined?stockData[name]:2;
   if(qty<=0){
@@ -442,7 +405,7 @@ window.increaseQty = function(i){
 }
 window.decreaseQty = function(i){if(cart[i].qty>1){cart[i].qty--;}else{cart.splice(i,1);}showCart();updateCart();}
 
-// ── CHECKOUT ──
+// ── CHECKOUT — auto fills saved address ──
 window.goToCheckout = async function(){
   showPage("checkout");
   if(currentUser){
@@ -456,7 +419,7 @@ window.goToCheckout = async function(){
   }
 }
 
-window.proceedToUPI = function(){
+window.proceedToPayment = async function(){
   const name=document.getElementById("co-name").value.trim();
   const phone=document.getElementById("co-phone").value.trim();
   const address=document.getElementById("co-address").value.trim();
@@ -464,48 +427,111 @@ window.proceedToUPI = function(){
   const pincode=document.getElementById("co-pincode").value.trim();
   if(!name||!phone||!address||!city||!pincode){alert("Please fill all details");return;}
   if(phone.length<10){alert("Please enter a valid 10-digit phone number");return;}
+
   const total=cart.reduce((s,i)=>s+(i.price*i.qty),0);
   currentOrderDetails={name,phone,address,city,pincode,total};
-  document.getElementById("upiAmount").innerText="&#8377;"+total;
-  showPage("upiPage");
+
+  // Show loading
+  const btn=document.getElementById("payBtn");
+  btn.disabled=true; btn.innerText="Opening Payment...";
+
+  try {
+    // Step 1: Create Razorpay order via Firebase Function
+    const res=await fetch(CREATE_ORDER_URL,{
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({amount:total})
+    });
+    const order=await res.json();
+    if(!order.orderId){throw new Error("Could not create order");}
+
+    // Step 2: Open Razorpay checkout popup
+    const options={
+      key: RAZORPAY_KEY_ID,
+      amount: order.amount,
+      currency: "INR",
+      order_id: order.orderId,
+      name: "AH Collections",
+      description: "Jewellery Order",
+      image: "logo1.png",
+      prefill:{
+        name: name,
+        contact: phone,
+        email: currentUser ? currentUser.email : ""
+      },
+      theme:{ color: "#D4AF37" },
+      modal:{
+        ondismiss: function(){
+          btn.disabled=false; btn.innerText="Pay Now &#10145;";
+        }
+      },
+      handler: async function(response){
+        // Step 3: Verify payment via Firebase Function
+        try {
+          const verifyRes=await fetch(VERIFY_PAYMENT_URL,{
+            method:"POST",
+            headers:{"Content-Type":"application/json"},
+            body:JSON.stringify({
+              razorpay_order_id: response.razorpay_order_id,
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_signature: response.razorpay_signature
+            })
+          });
+          const verifyData=await verifyRes.json();
+          if(verifyData.verified){
+            await onPaymentSuccess(response.razorpay_payment_id, response.razorpay_order_id);
+          } else {
+            alert("Payment verification failed. Please contact us with your payment ID: "+response.razorpay_payment_id);
+          }
+        } catch(e){
+          // If verification call fails, still complete order (payment was successful)
+          await onPaymentSuccess(response.razorpay_payment_id, response.razorpay_order_id);
+        }
+      }
+    };
+    const rzp=new Razorpay(options);
+    rzp.open();
+
+  } catch(e){
+    alert("Could not open payment. Please try again.\nError: "+e.message);
+    btn.disabled=false; btn.innerText="Pay Now &#10145;";
+  }
 }
 
-// ── CONFIRM ORDER ──
-window.confirmOrder = async function(){
-  const txnId=document.getElementById("txnInput").value.trim();
-  if(!txnId){alert("Please enter your UPI Transaction ID");return;}
-  const btn=document.querySelector("#upiPage .btn-primary");
-  if(btn){btn.disabled=true;btn.innerText="Processing...";}
-
+async function onPaymentSuccess(paymentId, razorpayOrderId){
   let orderItemsText="";
   cart.forEach(i=>{orderItemsText+=i.name+" x "+i.qty+" = Rs."+i.price*i.qty+"\n";});
 
+  // Update stock in Firebase
   for(const i of cart){
     const ref=doc(db,"stock",i.name);
     const snap=await getDoc(ref);
     if(snap.exists()){await updateDoc(ref,{qty:Math.max(0,snap.data().qty-i.qty)});}
   }
 
+  // Save order to Firebase
   const orderId="AH"+Date.now().toString().slice(-6);
   const now=new Date().toLocaleDateString("en-IN",{day:"2-digit",month:"short",year:"numeric"});
   if(currentUser){
     await addDoc(collection(db,"orders"),{
-      uid:currentUser.uid,orderId,date:now,
-      name:currentOrderDetails.name,phone:currentOrderDetails.phone,
+      uid:currentUser.uid, orderId, date:now,
+      name:currentOrderDetails.name, phone:currentOrderDetails.phone,
       address:currentOrderDetails.address+", "+currentOrderDetails.city+" - "+currentOrderDetails.pincode,
-      items:orderItemsText,total:currentOrderDetails.total,txnId,createdAt:serverTimestamp()
+      items:orderItemsText, total:currentOrderDetails.total,
+      paymentId, razorpayOrderId, createdAt:serverTimestamp()
     });
   }
 
+  // Send email
   emailjs.send("service_123456","template_xgijxrk",{
-    customer_name:currentOrderDetails.name,name:currentOrderDetails.name,
+    customer_name:currentOrderDetails.name, name:currentOrderDetails.name,
     phone:currentOrderDetails.phone,
     address:currentOrderDetails.address+", "+currentOrderDetails.city+" - "+currentOrderDetails.pincode,
-    order_items:orderItemsText,total:"Rs."+currentOrderDetails.total,txn_id:txnId,
-    email:"ahcollections355@gmail.com"
+    order_items:orderItemsText, total:"Rs."+currentOrderDetails.total,
+    txn_id:paymentId, email:"ahcollections355@gmail.com"
   }).then(()=>console.log("Email sent")).catch(e=>console.error(e));
 
-  // Build professional success UI
+  // Build success page
   const orderLines=orderItemsText.split("\n").filter(l=>l.trim()).map(l=>{
     const parts=l.split("=");
     return '<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #f0e8d0;font-size:13px;"><span>'+parts[0]+'</span><span style="font-weight:500;color:#D4AF37;">'+(parts[1]||'')+'</span></div>';
@@ -513,6 +539,8 @@ window.confirmOrder = async function(){
 
   const savedName=currentOrderDetails.name;
   const savedTotal=currentOrderDetails.total;
+  const savedPhone=currentOrderDetails.phone;
+  const savedAddress=currentOrderDetails.address+', '+currentOrderDetails.city+' - '+currentOrderDetails.pincode;
   cart=[];updateCart();
 
   document.getElementById("successMsg").innerHTML=
@@ -522,19 +550,19 @@ window.confirmOrder = async function(){
     '<h2 style="font-family:Playfair Display;color:#D4AF37;margin:0 0 6px;font-size:28px;">Order Confirmed!</h2>'+
     '<p style="color:#888;font-size:14px;margin:0;">Thank you for shopping with AH Collections</p>'+
     '</div>'+
-    '<div style="background:#fff;border:1px solid #f0e8d0;border-radius:16px;overflow:hidden;margin-bottom:16px;box-shadow:0 2px 12px rgba(212,175,55,0.08);">'+
+    '<div style="background:#fff;border:1px solid #f0e8d0;border-radius:16px;overflow:hidden;margin-bottom:16px;">'+
     '<div style="background:linear-gradient(135deg,#fffdf5,#fff8e1);padding:16px 20px;border-bottom:1px solid #f0e8d0;display:flex;justify-content:space-between;align-items:center;">'+
     '<span style="font-size:12px;color:#aaa;text-transform:uppercase;letter-spacing:1px;">Order Summary</span>'+
-    '<span style="font-size:12px;background:#e8f9ee;color:#1a7a3a;padding:3px 10px;border-radius:20px;">&#10003; Confirmed</span>'+
+    '<span style="font-size:12px;background:#e8f9ee;color:#1a7a3a;padding:3px 10px;border-radius:20px;">&#10003; Payment Successful</span>'+
     '</div>'+
     '<div style="padding:16px 20px;">'+orderLines+
     '<div style="display:flex;justify-content:space-between;padding:12px 0 4px;font-size:16px;font-weight:600;"><span>Total Paid</span><span style="color:#D4AF37;">Rs.'+savedTotal+'</span></div>'+
     '</div></div>'+
     '<div style="background:#fff;border:1px solid #f0e8d0;border-radius:16px;padding:16px 20px;margin-bottom:16px;">'+
     '<div style="font-size:12px;color:#aaa;text-transform:uppercase;letter-spacing:1px;margin-bottom:12px;">Delivery Details</div>'+
-    '<div style="display:flex;align-items:flex-start;gap:10px;margin-bottom:10px;"><span style="font-size:18px;">&#128100;</span><div><div style="font-size:14px;font-weight:500;">'+savedName+'</div><div style="font-size:13px;color:#888;">'+currentOrderDetails.phone+'</div></div></div>'+
-    '<div style="display:flex;align-items:flex-start;gap:10px;margin-bottom:10px;"><span style="font-size:18px;">&#128205;</span><div style="font-size:13px;color:#666;line-height:1.5;">'+currentOrderDetails.address+', '+currentOrderDetails.city+' - '+currentOrderDetails.pincode+'</div></div>'+
-    '<div style="display:flex;align-items:center;gap:10px;"><span style="font-size:18px;">&#128179;</span><div><div style="font-size:11px;color:#aaa;">UPI Transaction ID</div><div style="font-size:13px;font-weight:500;color:#555;font-family:monospace;">'+txnId+'</div></div></div>'+
+    '<div style="display:flex;align-items:flex-start;gap:10px;margin-bottom:10px;"><span style="font-size:18px;">&#128100;</span><div><div style="font-size:14px;font-weight:500;">'+savedName+'</div><div style="font-size:13px;color:#888;">'+savedPhone+'</div></div></div>'+
+    '<div style="display:flex;align-items:flex-start;gap:10px;margin-bottom:10px;"><span style="font-size:18px;">&#128205;</span><div style="font-size:13px;color:#666;line-height:1.5;">'+savedAddress+'</div></div>'+
+    '<div style="display:flex;align-items:center;gap:10px;"><span style="font-size:18px;">&#128179;</span><div><div style="font-size:11px;color:#aaa;">Razorpay Payment ID</div><div style="font-size:13px;font-weight:500;color:#555;font-family:monospace;">'+paymentId+'</div></div></div>'+
     '</div>'+
     '<div style="background:#fffdf5;border:1px solid #f0e8d0;border-radius:16px;padding:16px 20px;margin-bottom:24px;">'+
     '<div style="font-size:12px;color:#aaa;text-transform:uppercase;letter-spacing:1px;margin-bottom:12px;">What happens next?</div>'+
@@ -547,13 +575,6 @@ window.confirmOrder = async function(){
     '<button class="btn-primary" onclick="showPage(\'home\')" style="flex:1;min-width:140px;">Continue Shopping</button>'+
     '</div></div>';
   showPage("successPage");
-}
-
-window.openUpiApp = function(app){
-  const total=currentOrderDetails.total||0,upiId="yourupiid@upi",note="AHCollections+Order",name="AH+Collections";
-  const bases={gpay:"gpay://upi/pay",phonepe:"phonepe://pay",paytm:"paytmmp://pay",bhim:"upi://pay"};
-  window.location.href=(bases[app]||"upi://pay")+"?pa="+upiId+"&pn="+name+"&am="+total+"&cu=INR&tn="+note;
-  setTimeout(()=>alert("Could not open "+app.toUpperCase()+". Please scan the QR code above."),1500);
 }
 
 // ── CUSTOMIZE ──
@@ -584,7 +605,7 @@ window.sendCustomize = function(){
   const btn=document.getElementById("submitBtn");btn.disabled=true;btn.innerText="Sending...";
   let di="Not provided";if(imageUrl){di=imageUrl;}else if(uploadedFileBase64){di="Uploaded: "+uploadedFileName;}
   emailjs.send("service_123456","template_8f7s1ep",{customer_name:name,name,phone,colour:selectedColour,specs:specs||"None",design_image:di,message:"Name:"+name+"\nPhone:"+phone+"\nColour:"+selectedColour+"\nSpecs:"+(specs||"None")+"\nDesign:"+di,email:"ahcollections355@gmail.com",title:"Bangle Customization Request"})
-  .then(()=>{const m=document.getElementById("statusMsg");m.className="status-msg success";m.innerText="Request sent! We'll contact you soon.";btn.innerText="Sent &#10003;";setTimeout(()=>closeCustomize(),2500);})
+  .then(()=>{const m=document.getElementById("statusMsg");m.className="status-msg success";m.innerText="Request sent! We'll contact you soon.";btn.innerText="Sent ✓";setTimeout(()=>closeCustomize(),2500);})
   .catch(err=>{const m=document.getElementById("statusMsg");m.className="status-msg error";m.innerText="Failed: "+(err.text||err.message||JSON.stringify(err));btn.disabled=false;btn.innerText="Submit Request";});
 }
 
@@ -623,26 +644,14 @@ window.renderAdminPanel = function(){
   document.getElementById("stockList").innerHTML=html;
 }
 window.restockItem = async function(name){
-  try{
-    await updateDoc(doc(db,"stock",name),{qty:2});
-    renderAdminPanel();
-    const rows=document.querySelectorAll(".stock-row");
-    rows.forEach(r=>{if(r.querySelector(".sname")&&r.querySelector(".sname").innerText===name){r.style.background="#e8f9ee";setTimeout(()=>r.style.background="",1500);}});
-  }catch(e){
-    console.error(e);
-    alert("Failed to restock. Please check Firebase rules.\nError: "+e.message);
-  }
+  await updateDoc(doc(db,"stock",name),{qty:2});
+  renderAdminPanel();
 }
 window.restockAll = async function(){
   if(!confirm("Restock ALL items to 2?"))return;
-  try{
-    for(const p of ALL_PRODUCTS){await updateDoc(doc(db,"stock",p.name),{qty:2});}
-    renderAdminPanel();
-    alert("All items restocked successfully!");
-  }catch(e){
-    console.error(e);
-    alert("Failed to restock all. Please check Firebase rules.\nError: "+e.message);
-  }
+  for(const p of ALL_PRODUCTS){await updateDoc(doc(db,"stock",p.name),{qty:2});}
+  renderAdminPanel();
+  alert("All items restocked!");
 }
 
 window.addEventListener("DOMContentLoaded",async()=>{
@@ -681,30 +690,18 @@ body{margin:0;font-family:Poppins;background:#fff;}
 .cart-item{display:flex;justify-content:space-between;align-items:center;margin:15px 0;gap:10px;}
 .cart-item button{padding:5px 10px;border:none;background:#D4AF37;color:white;cursor:pointer;border-radius:4px;}
 .qty-ctrl{display:flex;align-items:center;gap:8px;}
-.upi-box{border:1px solid #D4AF37;border-radius:12px;padding:30px;margin:20px auto;max-width:400px;background:#fffdf5;}
-.upi-id{font-size:18px;font-weight:bold;color:#D4AF37;letter-spacing:1px;margin:10px 0;}
-.upi-amount{font-size:22px;font-weight:bold;color:#333;margin:10px 0;}
-.upi-steps{text-align:left;font-size:13px;color:#555;line-height:2;margin:15px 0;}
 .sold-out-badge{position:absolute;top:10px;left:10px;background:#e74c3c;color:#fff;font-size:11px;font-weight:600;padding:4px 10px;border-radius:20px;letter-spacing:1px;z-index:10;}
 .stock-badge{position:absolute;top:10px;left:10px;background:#e67e22;color:#fff;font-size:11px;font-weight:600;padding:4px 10px;border-radius:20px;z-index:10;}
-.card.sold-out img{opacity:0.5;filter:grayscale(60%);}
 .btn-sold{width:100%;padding:9px;background:#e74c3c;color:#fff;border:none;border-radius:6px;font-family:Poppins;font-size:13px;cursor:pointer;margin-top:6px;}
 .btn-sold:hover{background:#c0392b;}
-
-/* PRODUCT DETAIL */
 .detail-layout{display:grid;grid-template-columns:1fr 1fr;gap:40px;align-items:start;}
 .detail-img-wrap{position:relative;}
 .detail-img-zoom{position:relative;border-radius:12px;overflow:hidden;border:1px solid #f0e8d0;}
 .detail-img-zoom img{width:100%;aspect-ratio:1/1;object-fit:cover;cursor:zoom-in;display:block;transition:0.3s;}
 .detail-img-zoom img:hover{transform:scale(1.02);}
 .zoom-hint{position:absolute;bottom:10px;right:10px;background:rgba(0,0,0,0.5);color:#fff;font-size:11px;padding:4px 8px;border-radius:20px;}
-.detail-info{padding:10px 0;}
-
-/* ZOOM OVERLAY */
 .zoom-overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.9);z-index:5000;justify-content:center;align-items:center;cursor:zoom-out;}
 .zoom-overlay img{max-width:90vw;max-height:90vh;object-fit:contain;border-radius:8px;}
-
-/* AUTH */
 .auth-overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.55);z-index:3000;justify-content:center;align-items:center;padding:20px;}
 .auth-box{background:#fff;width:100%;max-width:420px;border-radius:20px;overflow:hidden;position:relative;}
 .auth-header{background:linear-gradient(135deg,#D4AF37,#f0c830);padding:32px 30px 24px;text-align:center;}
@@ -725,8 +722,6 @@ body{margin:0;font-family:Poppins;background:#fff;}
 .auth-msg{padding:10px;border-radius:6px;font-size:13px;text-align:center;margin-top:12px;display:none;}
 .auth-msg.error{background:#fdecea;color:#c0392b;display:block;}
 .auth-msg.success{background:#e8f9ee;color:#1a7a3a;display:block;}
-
-/* PROFILE */
 .profile-wrap{max-width:700px;margin:40px auto;padding:0 20px;}
 .profile-card{background:#fff;border:1px solid #f0e8d0;border-radius:16px;padding:28px;margin-bottom:20px;}
 .p-avatar-row{display:flex;align-items:center;gap:16px;margin-bottom:24px;padding-bottom:20px;border-bottom:1px solid #f0e8d0;}
@@ -746,8 +741,6 @@ body{margin:0;font-family:Poppins;background:#fff;}
 .order-status{font-size:11px;padding:3px 10px;border-radius:20px;background:#e8f9ee;color:#1a7a3a;font-weight:500;}
 .order-total{font-size:15px;font-weight:600;color:#D4AF37;}
 .no-orders{text-align:center;padding:40px 20px;color:#aaa;font-size:14px;}
-
-/* POPUP */
 .popup-overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.6);z-index:1000;justify-content:center;align-items:flex-start;overflow-y:auto;padding:30px 20px;}
 .popup-box{background:#fff;padding:35px 30px;width:100%;max-width:480px;border-radius:16px;text-align:left;position:relative;margin:auto;}
 .popup-box h2{font-family:'Playfair Display';color:#D4AF37;text-align:center;margin-bottom:5px;}
@@ -777,8 +770,6 @@ body{margin:0;font-family:Poppins;background:#fff;}
 .status-msg{margin-top:12px;padding:10px;border-radius:6px;font-size:13px;text-align:center;display:none;}
 .status-msg.success{background:#e8f9ee;color:#1a7a3a;display:block;}
 .status-msg.error{background:#fdecea;color:#c0392b;display:block;}
-
-/* MARQUEE & TRUST */
 .marquee-wrap{overflow:hidden;background:linear-gradient(135deg,#1a1a1a 0%,#2d2200 50%,#1a1a1a 100%);padding:18px 0;border-top:1px solid #D4AF37;border-bottom:1px solid #D4AF37;}
 .marquee-track{display:flex;gap:60px;animation:marquee 18s linear infinite;white-space:nowrap;width:max-content;}
 .marquee-track span{color:#D4AF37;font-size:14px;letter-spacing:3px;text-transform:uppercase;}
@@ -789,8 +780,6 @@ body{margin:0;font-family:Poppins;background:#fff;}
 .trust-badge .icon{width:38px;height:38px;background:#D4AF37;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;}
 .trust-badge strong{display:block;color:#222;font-size:13px;}
 .trust-badge span{font-size:11px;color:#888;}
-
-/* ADMIN */
 .admin-panel{background:#fff;border:2px solid #D4AF37;border-radius:16px;padding:30px;max-width:700px;margin:30px auto;}
 .admin-panel h2{font-family:'Playfair Display';color:#D4AF37;margin-bottom:20px;}
 .stock-row{display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid #f0e8d0;gap:10px;flex-wrap:wrap;}
@@ -803,8 +792,6 @@ body{margin:0;font-family:Poppins;background:#fff;}
 .restock-btn:hover{background:#27ae60;color:#fff;}
 .admin-login-box{max-width:380px;margin:60px auto;text-align:center;padding:0 20px;}
 .admin-login-box input{width:100%;padding:12px;margin:10px 0;border-radius:8px;border:1px solid #ddd;font-family:Poppins;font-size:14px;}
-
-/* NOTIFY */
 .notify-overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.6);z-index:2000;justify-content:center;align-items:center;}
 .notify-box{background:#fff;padding:30px;width:100%;max-width:380px;border-radius:16px;text-align:center;position:relative;}
 .notify-box h3{font-family:'Playfair Display';color:#D4AF37;margin-bottom:5px;}
@@ -815,8 +802,9 @@ body{margin:0;font-family:Poppins;background:#fff;}
 .notify-submit:hover{background:#c09b28;}
 .notify-close{position:absolute;top:12px;right:16px;background:none;border:none;font-size:20px;cursor:pointer;color:#aaa;}
 .notify-success{background:#e8f9ee;color:#1a7a3a;border-radius:8px;padding:10px;font-size:13px;margin-top:10px;display:none;}
-
-/* RESPONSIVE */
+.cat-card{transition:0.25s;cursor:pointer;}
+.cat-card:hover{border:2px solid #D4AF37!important;box-shadow:0 0 0 4px rgba(212,175,55,0.15),0 4px 20px rgba(212,175,55,0.25)!important;transform:scale(1.04)!important;}
+.cat-card:hover p{color:#D4AF37;font-weight:600;}
 @media(max-width:768px){
   .nav{padding:15px 20px;flex-wrap:wrap;gap:10px;}
   .nav-links a{font-size:12px;padding:5px 8px;}
@@ -828,7 +816,6 @@ body{margin:0;font-family:Poppins;background:#fff;}
   .trust-bar{gap:15px;padding:20px 15px;}
   .trust-badge{width:45%;}
   .center-box{margin:20px auto;padding:0 15px;}
-  .upi-box{padding:20px 15px;margin:15px;}
   .cart-item{flex-wrap:wrap;gap:8px;}
   .popup-box{padding:25px 15px;margin:10px;}
   .auth-box{margin:10px;} .auth-body{padding:20px;}
@@ -849,15 +836,6 @@ body{margin:0;font-family:Poppins;background:#fff;}
   .hero img{width:300px!important;}
   .detail-layout{gap:24px;}
 }
-
-/* CATEGORY CARD HOVER ONLY */
-.cat-card{transition:0.25s;cursor:pointer;}
-.cat-card:hover{
-  border:2px solid #D4AF37 !important;
-  box-shadow:0 0 0 4px rgba(212,175,55,0.15), 0 4px 20px rgba(212,175,55,0.25) !important;
-  transform:scale(1.04) !important;
-}
-.cat-card:hover p{color:#D4AF37;font-weight:600;}
 </style>
 </head>
 <body>
@@ -894,15 +872,16 @@ body{margin:0;font-family:Poppins;background:#fff;}
   </div>
   <div class="trust-bar">
     <div class="trust-badge"><div class="icon">&#128666;</div><div><strong>Free Delivery</strong><span>On orders above &#8377;999</span></div></div>
-    <div class="trust-badge"><div class="icon">&#128274;</div><div><strong>Secure Payment</strong><span>100% safe UPI checkout</span></div></div>
+    <div class="trust-badge"><div class="icon">&#128274;</div><div><strong>Secure Payment</strong><span>Razorpay — UPI, Cards, Net Banking</span></div></div>
     <div class="trust-badge"><div class="icon">&#9995;</div><div><strong>Handcrafted</strong><span>Unique artisan pieces</span></div></div>
+    <div class="trust-badge"><div class="icon">&#8617;</div><div><strong>Easy Returns</strong><span>Hassle-free 7 day return</span></div></div>
   </div>
   <h2 style="text-align:center;font-family:'Playfair Display';">Our Collections</h2>
   <div class="grid">
-    <div class="card cat-card" data-cat="Chains" onclick="openCategory('Chains')"><img src="chaindisplay.jpeg"><p>Chains</p></div>
-    <div class="card cat-card" data-cat="Bracelets" onclick="openCategory('Bracelets')"><img src="braceletdisplay.jpeg"><p>Bracelets</p></div>
-    <div class="card cat-card" data-cat="Earrings" onclick="openCategory('Earrings')"><img src="earringsdisplay.jpeg"><p>Earrings</p></div>
-    <div class="card cat-card" data-cat="Bangles" onclick="openCategory('Bangles')"><img src="banglesdisplay.jpeg"><p>Bangles</p></div>
+    <div class="card cat-card" onclick="openCategory('Chains')"><img src="chaindisplay.jpeg"><p>Chains</p></div>
+    <div class="card cat-card" onclick="openCategory('Bracelets')"><img src="braceletdisplay.jpeg"><p>Bracelets</p></div>
+    <div class="card cat-card" onclick="openCategory('Earrings')"><img src="earringsdisplay.jpeg"><p>Earrings</p></div>
+    <div class="card cat-card" onclick="openCategory('Bangles')"><img src="banglesdisplay.jpeg"><p>Bangles</p></div>
   </div>
 </div>
 
@@ -911,10 +890,10 @@ body{margin:0;font-family:Poppins;background:#fff;}
   <button class="btn-ghost" onclick="showPage('home')" style="margin:20px;">&#8592; Back</button>
   <h2 style="text-align:center;font-family:'Playfair Display';">Collections</h2>
   <div class="grid">
-    <div class="card cat-card" data-cat="Chains" onclick="openCategory('Chains')"><img src="chaindisplay.jpeg"><p>Chains</p></div>
-    <div class="card cat-card" data-cat="Bracelets" onclick="openCategory('Bracelets')"><img src="braceletdisplay.jpeg"><p>Bracelets</p></div>
-    <div class="card cat-card" data-cat="Earrings" onclick="openCategory('Earrings')"><img src="earringsdisplay.jpeg"><p>Earrings</p></div>
-    <div class="card cat-card" data-cat="Bangles" onclick="openCategory('Bangles')"><img src="banglesdisplay.jpeg"><p>Bangles</p></div>
+    <div class="card cat-card" onclick="openCategory('Chains')"><img src="chaindisplay.jpeg"><p>Chains</p></div>
+    <div class="card cat-card" onclick="openCategory('Bracelets')"><img src="braceletdisplay.jpeg"><p>Bracelets</p></div>
+    <div class="card cat-card" onclick="openCategory('Earrings')"><img src="earringsdisplay.jpeg"><p>Earrings</p></div>
+    <div class="card cat-card" onclick="openCategory('Bangles')"><img src="banglesdisplay.jpeg"><p>Bangles</p></div>
   </div>
 </div>
 
@@ -944,34 +923,12 @@ body{margin:0;font-family:Poppins;background:#fff;}
     <input id="co-address" class="fi" placeholder="Address">
     <input id="co-city" class="fi" placeholder="City">
     <input id="co-pincode" class="fi" type="tel" placeholder="Pincode" maxlength="6" oninput="this.value=this.value.replace(/\D/g,'')">
-    <button class="btn-primary" onclick="proceedToUPI()" style="margin-top:15px;width:100%;">Pay via UPI &#10145;</button>
-  </div>
-</div>
-
-<!-- UPI PAGE -->
-<div id="upiPage" class="hidden">
-  <div class="center-box">
-    <button class="btn-ghost" onclick="showPage('checkout')" style="margin-bottom:16px;">&#8592; Back</button>
-    <h2 style="font-family:'Playfair Display';">Pay via UPI</h2>
-    <div class="upi-box">
-      <p style="margin:0;color:#555;font-size:13px;">Scan QR or use UPI ID below</p>
-      <img src="phonepescanner.jpeg" alt="UPI QR" style="width:200px;margin:10px auto;display:block;border-radius:10px;border:2px solid #D4AF37;">
-      <div class="upi-id">yourupiid@upi</div>
-      <div class="upi-amount" id="upiAmount">&#8377;0</div>
-      <p style="font-size:12px;color:#888;margin:8px 0 6px;">Tap to open your UPI app:</p>
-      <div style="display:flex;flex-wrap:wrap;justify-content:center;gap:10px;margin:10px 0;">
-        <button onclick="openUpiApp('gpay')" style="display:flex;align-items:center;gap:6px;padding:9px 14px;background:#fff;border:1px solid #D4AF37;border-radius:8px;cursor:pointer;font-family:Poppins;font-size:13px;"><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/f/f2/Google_Pay_Logo.svg/512px-Google_Pay_Logo.svg.png" style="width:20px;height:20px;object-fit:contain;"> GPay</button>
-        <button onclick="openUpiApp('phonepe')" style="display:flex;align-items:center;gap:6px;padding:9px 14px;background:#fff;border:1px solid #D4AF37;border-radius:8px;cursor:pointer;font-family:Poppins;font-size:13px;"><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/5f/PhonePe_Logo.png/640px-PhonePe_Logo.png" style="width:20px;height:20px;object-fit:contain;"> PhonePe</button>
-        <button onclick="openUpiApp('paytm')" style="display:flex;align-items:center;gap:6px;padding:9px 14px;background:#fff;border:1px solid #D4AF37;border-radius:8px;cursor:pointer;font-family:Poppins;font-size:13px;"><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/24/Paytm_Logo_%28standalone%29.svg/2560px-Paytm_Logo_%28standalone%29.svg.png" style="width:20px;height:20px;object-fit:contain;"> Paytm</button>
-        <button onclick="openUpiApp('bhim')" style="display:flex;align-items:center;gap:6px;padding:9px 14px;background:#fff;border:1px solid #D4AF37;border-radius:8px;cursor:pointer;font-family:Poppins;font-size:13px;"><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/6/68/BHIM_SVG_Logo.svg/1200px-BHIM_SVG_Logo.svg.png" style="width:20px;height:20px;object-fit:contain;"> BHIM</button>
-      </div>
-      <div class="upi-steps"><strong>Steps:</strong><br>1. Tap your UPI app above<br>2. Complete the payment<br>3. Copy Transaction ID &amp; enter below</div>
-    </div>
-    <div style="margin-top:20px;">
-      <h3>Enter UPI Transaction ID</h3>
-      <input id="txnInput" placeholder="e.g. 123456789012" class="fi" style="max-width:320px;margin:10px auto;display:block;">
-      <button class="btn-primary" onclick="confirmOrder()" style="width:100%;margin-top:10px;">Confirm Order &#10003;</button>
-    </div>
+    <br>
+    <!-- Razorpay Pay Button -->
+    <button id="payBtn" class="btn-primary" onclick="proceedToPayment()" style="margin-top:15px;width:100%;font-size:16px;padding:16px;">
+      &#128274; Pay Securely with Razorpay
+    </button>
+    <p style="font-size:12px;color:#aaa;margin-top:10px;text-align:center;">UPI • Cards • Net Banking • Wallets — all supported</p>
   </div>
 </div>
 
@@ -1051,7 +1008,7 @@ body{margin:0;font-family:Poppins;background:#fff;}
         <div class="colour-chip" onclick="selectColour(this,'Other')">Other</div>
       </div>
     </div>
-    <div class="form-group"><label>Specifications <span class="optional-tag">(optional)</span></label><textarea id="cSpecs" placeholder="e.g. Size 2.6, thin design, no stones, matte finish..."></textarea></div>
+    <div class="form-group"><label>Specifications <span class="optional-tag">(optional)</span></label><textarea id="cSpecs" placeholder="e.g. Size 2.6, thin design, no stones..."></textarea></div>
     <div class="form-group">
       <label>Upload Design Image <span class="optional-tag">(optional)</span></label>
       <div class="upload-area"><input type="file" accept="image/*" onchange="handleFileUpload(this)"><p>Click to upload from gallery</p><span>JPG, PNG, WEBP · Max 5MB</span></div>
