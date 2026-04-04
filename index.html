@@ -7,10 +7,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital@0;1&family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 <script>emailjs.init("5k8K3lISiv1nNEsSw");</script>
-<!-- Razorpay -->
 <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
-
-<!-- Firebase -->
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, updateProfile } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
@@ -29,14 +26,16 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
-// ── RAZORPAY CONFIG ──
 const RAZORPAY_KEY_ID = "rzp_test_SYubgFBZsAPOAu";
 const CREATE_ORDER_URL = "https://createorder-qhvjtgjmaq-uc.a.run.app";
 const VERIFY_PAYMENT_URL = "https://verifypayment-qhvjtgjmaq-uc.a.run.app";
-
-// ── DELIVERY CONFIG ──
 const DELIVERY_CHARGE = 60;
 const FREE_DELIVERY_ABOVE = 999;
+
+// ── COUPON CONFIG ──
+const VALID_COUPONS = {
+  "WELCOME10": { type: "percent", value: 10, label: "10% off" }
+};
 
 const ALL_PRODUCTS = [
   {name:"Flower Chain",price:399,image:"chain1.jpeg",cat:"Chains",desc:"Elegant gold flower chain with 3 daisy pendants. Perfect for everyday wear."},
@@ -67,6 +66,7 @@ let uploadedFileBase64 = "";
 let uploadedFileName = "";
 let currentNotifyProduct = "";
 let currentProduct = null;
+let appliedCoupon = null;
 
 async function initStock() {
   for (const p of ALL_PRODUCTS) {
@@ -99,7 +99,6 @@ onAuthStateChanged(auth, async (user) => {
   }
 });
 
-// ── NAV ──
 window.renderNav = function() {
   const nr = document.getElementById("navRight"); if (!nr) return;
   if (currentUser) {
@@ -121,7 +120,6 @@ window.renderNav = function() {
   updateCart();
 }
 
-// ── PAGES ──
 window.showPage = function(p) {
   ["home","shop","products","cartPage","checkout","successPage","adminLogin","adminPanel","profilePage","productDetail"]
     .forEach(id => { const el=document.getElementById(id); if(el) el.classList.add("hidden"); });
@@ -138,7 +136,6 @@ window.addEventListener("load", () => {
   if (window.location.hash === "#admin-ah2024") { window.location.hash = ""; showPage("adminLogin"); }
 });
 
-// ── AUTH ──
 window.openAuth = function(tab) {
   document.getElementById("authOverlay").style.display = "flex";
   document.body.style.overflow = "hidden";
@@ -192,7 +189,6 @@ window.submitLogin = async function() {
 
 window.doLogout = async function() { await signOut(auth); renderNav(); showPage("home"); }
 
-// ── PROFILE ──
 window.renderProfile = async function() {
   if(!currentUser){showPage("home");openAuth("login");return;}
   const uSnap=await getDoc(doc(db,"users",currentUser.uid));
@@ -268,7 +264,6 @@ window.saveAddress = async function(){
   setTimeout(()=>m.style.display="none",2500);
 }
 
-// ── CART ──
 window.updateCart = function(){const el=document.getElementById("cartCount");if(el)el.innerText=cart.reduce((s,i)=>s+i.qty,0);}
 
 window.addToCart = function(name,price,image,btn){
@@ -285,7 +280,6 @@ window.addToCart = function(name,price,image,btn){
   }
 }
 
-// ── PRODUCT DETAIL ──
 window.openProductDetail = function(name) {
   const p = ALL_PRODUCTS.find(x => x.name === name); if(!p) return;
   currentProduct = p;
@@ -321,6 +315,7 @@ window.openProductDetail = function(name) {
           ${p.cat==="Bangles"?`<button class="btn-ghost" onclick="openCustomize()" style="margin-top:12px;width:100%;">&#10024; Customize This Design</button>`:""}
           <div style="margin-top:24px;padding-top:20px;border-top:1px solid #f0e8d0;">
             <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;"><span style="font-size:20px;">&#128666;</span><span style="font-size:13px;color:#555;">Free delivery on orders above &#8377;999</span></div>
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;"><span style="font-size:20px;">&#127381;</span><span style="font-size:13px;color:#1a7a3a;font-weight:500;">Use code WELCOME10 for 10% off!</span></div>
             <div style="display:flex;align-items:center;gap:10px;"><span style="font-size:20px;">&#128274;</span><span style="font-size:13px;color:#555;">100% secure Razorpay payment</span></div>
           </div>
         </div>
@@ -343,7 +338,6 @@ window.addToCartFromDetail = function(){
 
 let detailFromCat = "";
 window.goBackFromDetail = function(){ if(detailFromCat){openCategory(detailFromCat);}else{showPage("shop");} }
-
 window.openZoom = function(src){ document.getElementById("zoomOverlay").style.display="flex"; document.getElementById("zoomImg").src=src; document.body.style.overflow="hidden"; }
 window.closeZoom = function(){ document.getElementById("zoomOverlay").style.display="none"; document.body.style.overflow="auto"; }
 
@@ -378,14 +372,78 @@ function renderCategory(name){
   const el=document.getElementById("products");
   el.innerHTML=content; el.setAttribute("data-cat",name);
 }
-
 window.openCategory = function(name){renderCategory(name);showPage("products");}
 
-// ── CART PAGE ──
+// ── COUPON ──
+window.applyCoupon = function(){
+  const code = document.getElementById("couponInput").value.trim().toUpperCase();
+  const msgEl = document.getElementById("couponMsg");
+  if(!code){ msgEl.style.color="#e74c3c"; msgEl.innerText="Please enter a coupon code."; return; }
+  if(VALID_COUPONS[code]){
+    appliedCoupon = {...VALID_COUPONS[code], code};
+    msgEl.style.color="#1a7a3a";
+    msgEl.innerText="✓ Coupon applied! "+appliedCoupon.label+" discount added.";
+    document.getElementById("couponInput").disabled=true;
+    document.getElementById("applyBtn").disabled=true;
+    document.getElementById("applyBtn").innerText="Applied ✓";
+    document.getElementById("removeCouponBtn").style.display="inline-block";
+    refreshCartTotals();
+  } else {
+    appliedCoupon = null;
+    msgEl.style.color="#e74c3c";
+    msgEl.innerText="✗ Invalid coupon code. Please try again.";
+  }
+}
+
+window.removeCoupon = function(){
+  appliedCoupon = null;
+  document.getElementById("couponInput").value="";
+  document.getElementById("couponInput").disabled=false;
+  document.getElementById("applyBtn").disabled=false;
+  document.getElementById("applyBtn").innerText="Apply";
+  document.getElementById("couponMsg").innerText="";
+  document.getElementById("removeCouponBtn").style.display="none";
+  refreshCartTotals();
+}
+
+function calcDiscount(subtotal){
+  if(!appliedCoupon) return 0;
+  if(appliedCoupon.type==="percent") return Math.round(subtotal * appliedCoupon.value / 100);
+  return appliedCoupon.value;
+}
+
+function refreshCartTotals(){
+  const subtotal = cart.reduce((s,i)=>s+(i.price*i.qty),0);
+  const discount = calcDiscount(subtotal);
+  const discountedSubtotal = subtotal - discount;
+  const delivery = discountedSubtotal >= FREE_DELIVERY_ABOVE ? 0 : DELIVERY_CHARGE;
+  const grandTotal = discountedSubtotal + delivery;
+  const amountLeft = FREE_DELIVERY_ABOVE - discountedSubtotal;
+
+  document.getElementById("cartTotalsSection").innerHTML = `
+    <div style="display:flex;justify-content:space-between;margin-bottom:8px;font-size:14px;color:#555;">
+      <span>Subtotal</span><span>&#8377;${subtotal}</span>
+    </div>
+    ${discount>0?`<div style="display:flex;justify-content:space-between;margin-bottom:8px;font-size:14px;color:#1a7a3a;">
+      <span>🎟️ Discount (${appliedCoupon.code})</span><span>-&#8377;${discount}</span>
+    </div>`:''}
+    <div style="display:flex;justify-content:space-between;margin-bottom:8px;font-size:14px;color:${delivery===0?'#1a7a3a':'#e67e22'};">
+      <span>${delivery===0?'🎉 Free Delivery':'Delivery Charge'}</span>
+      <span>${delivery===0?'FREE':'&#8377;'+delivery}</span>
+    </div>
+    ${delivery>0&&amountLeft>0?`<div style="background:#fff8e1;border:1px solid #f0e8d0;border-radius:8px;padding:8px 12px;margin-bottom:12px;font-size:12px;color:#b8860b;">
+      🛍️ Add &#8377;${amountLeft} more for FREE delivery!
+    </div>`:''}
+    <div style="display:flex;justify-content:space-between;margin-bottom:16px;font-size:17px;font-weight:600;border-top:1px solid #f0e8d0;padding-top:10px;">
+      <span>Total</span><span style="color:#D4AF37;">&#8377;${grandTotal}</span>
+    </div>
+    <button class="btn-primary" onclick="goToCheckout(${grandTotal},${delivery},${discount})" style="width:100%;">Proceed to Checkout &#10145;</button>`;
+}
+
 window.showCart = function(){
-  let html=""; let total=0;
+  let html=""; let subtotal=0;
   cart.forEach((i,idx)=>{
-    total+=i.price*i.qty;
+    subtotal+=i.price*i.qty;
     html+=`<div class="cart-item">
       <img src="${i.image}" width="60" style="border-radius:6px;flex-shrink:0;">
       <p style="flex:1;text-align:left;margin:0 10px;font-size:14px;">${i.name}</p>
@@ -397,27 +455,49 @@ window.showCart = function(){
       <p style="min-width:70px;font-weight:500;">&#8377;${i.price*i.qty}</p>
     </div>`;
   });
+
   if(cart.length===0){
     html=`<div style="padding:40px;color:#aaa;text-align:center;"><div style="font-size:40px;">&#128722;</div>Your cart is empty.<br><button class="btn" onclick="showPage('shop')" style="margin-top:16px;">Shop Now</button></div>`;
   } else {
-    const delivery = total >= FREE_DELIVERY_ABOVE ? 0 : DELIVERY_CHARGE;
-    const grandTotal = total + delivery;
-    const amountLeft = FREE_DELIVERY_ABOVE - total;
+    const discount = calcDiscount(subtotal);
+    const discountedSubtotal = subtotal - discount;
+    const delivery = discountedSubtotal >= FREE_DELIVERY_ABOVE ? 0 : DELIVERY_CHARGE;
+    const grandTotal = discountedSubtotal + delivery;
+    const amountLeft = FREE_DELIVERY_ABOVE - discountedSubtotal;
+
     html += `<div style="border-top:1px solid #f0e8d0;margin-top:10px;padding-top:16px;">
-      <div style="display:flex;justify-content:space-between;margin-bottom:8px;font-size:14px;color:#555;">
-        <span>Subtotal</span><span>&#8377;${total}</span>
+      <!-- COUPON BOX -->
+      <div style="background:#fffdf5;border:1px solid #f0e8d0;border-radius:10px;padding:14px;margin-bottom:16px;">
+        <div style="font-size:13px;font-weight:500;color:#555;margin-bottom:8px;">🎟️ Have a coupon code?</div>
+        <div style="display:flex;gap:8px;">
+          <input id="couponInput" placeholder="Enter code e.g. WELCOME10" ${appliedCoupon?'disabled':''} value="${appliedCoupon?appliedCoupon.code:''}"
+            style="flex:1;padding:10px 12px;border:1.5px solid #ddd;border-radius:8px;font-family:Poppins;font-size:13px;"
+            onkeydown="if(event.key==='Enter')applyCoupon()">
+          <button id="applyBtn" onclick="applyCoupon()" ${appliedCoupon?'disabled':''} style="padding:10px 16px;background:#D4AF37;color:#fff;border:none;border-radius:8px;font-family:Poppins;font-size:13px;cursor:pointer;white-space:nowrap;">${appliedCoupon?'Applied ✓':'Apply'}</button>
+          <button id="removeCouponBtn" onclick="removeCoupon()" style="display:${appliedCoupon?'inline-block':'none'};padding:10px 12px;background:none;border:1px solid #e74c3c;color:#e74c3c;border-radius:8px;font-family:Poppins;font-size:12px;cursor:pointer;">Remove</button>
+        </div>
+        <div id="couponMsg" style="font-size:12px;margin-top:6px;color:${appliedCoupon?'#1a7a3a':'#e74c3c'};">${appliedCoupon?'✓ Coupon applied! '+appliedCoupon.label+' discount added.':''}</div>
       </div>
-      <div style="display:flex;justify-content:space-between;margin-bottom:8px;font-size:14px;color:${delivery===0?'#1a7a3a':'#e67e22'};">
-        <span>${delivery===0?'🎉 Free Delivery':'Delivery Charge'}</span>
-        <span>${delivery===0?'FREE':'&#8377;'+delivery}</span>
+      <!-- TOTALS -->
+      <div id="cartTotalsSection">
+        <div style="display:flex;justify-content:space-between;margin-bottom:8px;font-size:14px;color:#555;">
+          <span>Subtotal</span><span>&#8377;${subtotal}</span>
+        </div>
+        ${discount>0?`<div style="display:flex;justify-content:space-between;margin-bottom:8px;font-size:14px;color:#1a7a3a;">
+          <span>🎟️ Discount (${appliedCoupon.code})</span><span>-&#8377;${discount}</span>
+        </div>`:''}
+        <div style="display:flex;justify-content:space-between;margin-bottom:8px;font-size:14px;color:${delivery===0?'#1a7a3a':'#e67e22'};">
+          <span>${delivery===0?'🎉 Free Delivery':'Delivery Charge'}</span>
+          <span>${delivery===0?'FREE':'&#8377;'+delivery}</span>
+        </div>
+        ${delivery>0&&amountLeft>0?`<div style="background:#fff8e1;border:1px solid #f0e8d0;border-radius:8px;padding:8px 12px;margin-bottom:12px;font-size:12px;color:#b8860b;">
+          🛍️ Add &#8377;${amountLeft} more for FREE delivery!
+        </div>`:''}
+        <div style="display:flex;justify-content:space-between;margin-bottom:16px;font-size:17px;font-weight:600;border-top:1px solid #f0e8d0;padding-top:10px;">
+          <span>Total</span><span style="color:#D4AF37;">&#8377;${grandTotal}</span>
+        </div>
+        <button class="btn-primary" onclick="goToCheckout(${grandTotal},${delivery},${discount})" style="width:100%;">Proceed to Checkout &#10145;</button>
       </div>
-      ${delivery>0?`<div style="background:#fff8e1;border:1px solid #f0e8d0;border-radius:8px;padding:8px 12px;margin-bottom:12px;font-size:12px;color:#b8860b;">
-        🛍️ Add &#8377;${amountLeft} more for FREE delivery!
-      </div>`:''}
-      <div style="display:flex;justify-content:space-between;margin-bottom:16px;font-size:17px;font-weight:600;border-top:1px solid #f0e8d0;padding-top:10px;">
-        <span>Total</span><span style="color:#D4AF37;">&#8377;${grandTotal}</span>
-      </div>
-      <button class="btn-primary" onclick="goToCheckout(${grandTotal},${delivery})" style="width:100%;">Proceed to Checkout &#10145;</button>
     </div>`;
   }
   document.getElementById("cartItems").innerHTML=html;
@@ -431,12 +511,11 @@ window.increaseQty = function(i){
 }
 window.decreaseQty = function(i){if(cart[i].qty>1){cart[i].qty--;}else{cart.splice(i,1);}showCart();updateCart();}
 
-// ── CHECKOUT — auto fills saved address ──
-window.goToCheckout = async function(grandTotal, delivery){
+window.goToCheckout = async function(grandTotal, delivery, discount){
   showPage("checkout");
-  // Store delivery info for payment
   window._checkoutTotal = grandTotal;
   window._checkoutDelivery = delivery;
+  window._checkoutDiscount = discount || 0;
   if(currentUser){
     const uSnap=await getDoc(doc(db,"users",currentUser.uid));
     const u=uSnap.data()||{};const a=u.address||{};
@@ -446,11 +525,11 @@ window.goToCheckout = async function(grandTotal, delivery){
       sv("co-address",a.address||"");sv("co-city",a.city||"");sv("co-pincode",a.pincode||"");
     },100);
   }
-  // Show order summary in checkout
-  const subtotal = grandTotal - (delivery||0);
+  const subtotal = grandTotal - delivery + (discount||0);
   document.getElementById("checkoutSummary").innerHTML = `
     <div style="background:#fffdf5;border:1px solid #f0e8d0;border-radius:10px;padding:14px;margin-bottom:16px;font-size:14px;">
       <div style="display:flex;justify-content:space-between;margin-bottom:6px;color:#555;"><span>Subtotal</span><span>&#8377;${subtotal}</span></div>
+      ${discount>0?`<div style="display:flex;justify-content:space-between;margin-bottom:6px;color:#1a7a3a;"><span>🎟️ Coupon Discount</span><span>-&#8377;${discount}</span></div>`:''}
       <div style="display:flex;justify-content:space-between;margin-bottom:6px;color:${delivery===0?'#1a7a3a':'#e67e22'};"><span>${delivery===0?'🎉 Free Delivery':'Delivery'}</span><span>${delivery===0?'FREE':'&#8377;'+delivery}</span></div>
       <div style="display:flex;justify-content:space-between;font-weight:600;font-size:16px;border-top:1px solid #f0e8d0;padding-top:8px;margin-top:6px;"><span>Total</span><span style="color:#D4AF37;">&#8377;${grandTotal}</span></div>
     </div>`;
@@ -467,7 +546,8 @@ window.proceedToPayment = async function(){
 
   const total = window._checkoutTotal || cart.reduce((s,i)=>s+(i.price*i.qty),0);
   const delivery = window._checkoutDelivery || 0;
-  currentOrderDetails={name,phone,address,city,pincode,total,delivery};
+  const discount = window._checkoutDiscount || 0;
+  currentOrderDetails={name,phone,address,city,pincode,total,delivery,discount};
 
   const btn=document.getElementById("payBtn");
   btn.disabled=true; btn.innerText="Opening Payment...";
@@ -489,17 +569,9 @@ window.proceedToPayment = async function(){
       name: "AH Collections",
       description: "Jewellery Order",
       image: "logo1.png",
-      prefill:{
-        name: name,
-        contact: phone,
-        email: currentUser ? currentUser.email : ""
-      },
+      prefill:{ name, contact: phone, email: currentUser ? currentUser.email : "" },
       theme:{ color: "#D4AF37" },
-      modal:{
-        ondismiss: function(){
-          btn.disabled=false; btn.innerText="Pay Now &#10145;";
-        }
-      },
+      modal:{ ondismiss: function(){ btn.disabled=false; btn.innerText="Pay Now ➡"; } },
       handler: async function(response){
         try {
           const verifyRes=await fetch(VERIFY_PAYMENT_URL,{
@@ -512,22 +584,15 @@ window.proceedToPayment = async function(){
             })
           });
           const verifyData=await verifyRes.json();
-          if(verifyData.verified){
-            await onPaymentSuccess(response.razorpay_payment_id, response.razorpay_order_id);
-          } else {
-            alert("Payment verification failed. Please contact us with your payment ID: "+response.razorpay_payment_id);
-          }
-        } catch(e){
-          await onPaymentSuccess(response.razorpay_payment_id, response.razorpay_order_id);
-        }
+          if(verifyData.verified){ await onPaymentSuccess(response.razorpay_payment_id, response.razorpay_order_id); }
+          else { alert("Payment verification failed. Please contact us with your payment ID: "+response.razorpay_payment_id); }
+        } catch(e){ await onPaymentSuccess(response.razorpay_payment_id, response.razorpay_order_id); }
       }
     };
-    const rzp=new Razorpay(options);
-    rzp.open();
-
+    const rzp=new Razorpay(options); rzp.open();
   } catch(e){
     alert("Could not open payment. Please try again.\nError: "+e.message);
-    btn.disabled=false; btn.innerText="Pay Now &#10145;";
+    btn.disabled=false; btn.innerText="Pay Now ➡";
   }
 }
 
@@ -535,6 +600,8 @@ async function onPaymentSuccess(paymentId, razorpayOrderId){
   let orderItemsText="";
   cart.forEach(i=>{orderItemsText+=i.name+" x "+i.qty+" = Rs."+i.price*i.qty+"\n";});
   const delivery = currentOrderDetails.delivery || 0;
+  const discount = currentOrderDetails.discount || 0;
+  if(discount>0) orderItemsText += "Coupon Discount = -Rs."+discount+"\n";
   if(delivery>0) orderItemsText += "Delivery Charge = Rs."+delivery+"\n";
 
   for(const i of cart){
@@ -551,7 +618,8 @@ async function onPaymentSuccess(paymentId, razorpayOrderId){
       name:currentOrderDetails.name, phone:currentOrderDetails.phone,
       address:currentOrderDetails.address+", "+currentOrderDetails.city+" - "+currentOrderDetails.pincode,
       items:orderItemsText, total:currentOrderDetails.total,
-      delivery: delivery,
+      delivery, discount,
+      coupon: appliedCoupon ? appliedCoupon.code : "",
       paymentId, razorpayOrderId, createdAt:serverTimestamp()
     });
   }
@@ -566,14 +634,15 @@ async function onPaymentSuccess(paymentId, razorpayOrderId){
 
   const orderLines=orderItemsText.split("\n").filter(l=>l.trim()).map(l=>{
     const parts=l.split("=");
-    return '<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #f0e8d0;font-size:13px;"><span>'+parts[0]+'</span><span style="font-weight:500;color:#D4AF37;">'+(parts[1]||'')+'</span></div>';
+    const isDiscount = parts[0].includes("Discount");
+    return '<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #f0e8d0;font-size:13px;"><span>'+parts[0]+'</span><span style="font-weight:500;color:'+(isDiscount?'#1a7a3a':'#D4AF37')+'">'+(parts[1]||'')+'</span></div>';
   }).join("");
 
   const savedName=currentOrderDetails.name;
   const savedTotal=currentOrderDetails.total;
   const savedPhone=currentOrderDetails.phone;
   const savedAddress=currentOrderDetails.address+', '+currentOrderDetails.city+' - '+currentOrderDetails.pincode;
-  cart=[];updateCart();
+  cart=[]; appliedCoupon=null; updateCart();
 
   document.getElementById("successMsg").innerHTML=
     '<div style="max-width:480px;margin:0 auto;">'+
@@ -609,7 +678,6 @@ async function onPaymentSuccess(paymentId, razorpayOrderId){
   showPage("successPage");
 }
 
-// ── CUSTOMIZE ──
 window.openCustomize = function(){document.getElementById("customizePopup").style.display="flex";document.body.style.overflow="hidden";}
 window.closeCustomize = function(){document.getElementById("customizePopup").style.display="none";document.body.style.overflow="auto";resetForm();}
 function resetForm(){
@@ -641,7 +709,6 @@ window.sendCustomize = function(){
   .catch(err=>{const m=document.getElementById("statusMsg");m.className="status-msg error";m.innerText="Failed: "+(err.text||err.message||JSON.stringify(err));btn.disabled=false;btn.innerText="Submit Request";});
 }
 
-// ── NOTIFY ──
 window.openNotify = function(n){
   currentNotifyProduct=n;
   document.getElementById("notifyProduct").innerText=n;
@@ -658,9 +725,7 @@ window.submitNotify = function(){
   setTimeout(()=>closeNotify(),2000);
 }
 
-// ── ADMIN ──
 const ADMIN_PASSWORD="ah2024";
-window.openAdminLogin = function(){showPage("adminLogin");}
 window.checkAdminPassword = function(){
   if(document.getElementById("adminPwInput").value===ADMIN_PASSWORD){showPage("adminPanel");}
   else{alert("Wrong password.");}
@@ -692,7 +757,6 @@ window.addEventListener("DOMContentLoaded",async()=>{
   renderNav();
 });
 </script>
-
 <style>
 *{box-sizing:border-box;}
 body{margin:0;font-family:Poppins;background:#fff;}
@@ -706,6 +770,8 @@ body{margin:0;font-family:Poppins;background:#fff;}
 .hero{display:flex;justify-content:center;align-items:center;gap:40px;padding:40px;}
 .shimmer-text{background:linear-gradient(90deg,#b8860b 0%,#FFD700 40%,#fff8dc 60%,#b8860b 100%);background-size:200% auto;-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;animation:shimmer 3s linear infinite;font-family:'Playfair Display';font-size:42px;margin:0;}
 @keyframes shimmer{0%{background-position:200% center;}100%{background-position:-200% center;}}
+.coupon-banner{background:linear-gradient(135deg,#1a1a1a,#2d2200);color:#D4AF37;text-align:center;padding:10px;font-size:13px;letter-spacing:1px;}
+.coupon-banner span{background:#D4AF37;color:#000;padding:2px 10px;border-radius:20px;font-weight:700;margin:0 6px;}
 .grid{display:grid;grid-template-columns:repeat(4,1fr);gap:30px;padding:50px 100px;}
 .card{border:1px solid #eee;padding:15px;text-align:center;transition:0.3s;position:relative;cursor:pointer;}
 .card img{width:100%;aspect-ratio:1/1;object-fit:cover;}
@@ -871,14 +937,11 @@ body{margin:0;font-family:Poppins;background:#fff;}
 </style>
 </head>
 <body>
-
-<!-- NAV -->
+<div class="coupon-banner">🎉 Use code <span>WELCOME10</span> at checkout for 10% OFF your order!</div>
 <div class="nav">
   <div class="logo" onclick="showPage('home')">AH COLLECTIONS</div>
   <div class="nav-links" id="navRight"></div>
 </div>
-
-<!-- HOME -->
 <div id="home">
   <div class="hero">
     <img src="logo1.png" style="width:400px;">
@@ -894,19 +957,19 @@ body{margin:0;font-family:Poppins;background:#fff;}
       <span>HANDCRAFTED JEWELLERY</span><span class="dot">&#9670;</span>
       <span>ELEGANT &amp; TIMELESS</span><span class="dot">&#9670;</span>
       <span>FREE DELIVERY ABOVE &#8377;999</span><span class="dot">&#9670;</span>
-      <span>CUSTOMIZE YOUR BANGLES</span><span class="dot">&#9670;</span>
+      <span>USE CODE WELCOME10 FOR 10% OFF</span><span class="dot">&#9670;</span>
       <span>&#10022; AH COLLECTIONS</span><span class="dot">&#9670;</span>
       <span>HANDCRAFTED JEWELLERY</span><span class="dot">&#9670;</span>
       <span>ELEGANT &amp; TIMELESS</span><span class="dot">&#9670;</span>
       <span>FREE DELIVERY ABOVE &#8377;999</span><span class="dot">&#9670;</span>
-      <span>CUSTOMIZE YOUR BANGLES</span><span class="dot">&#9670;</span>
+      <span>USE CODE WELCOME10 FOR 10% OFF</span><span class="dot">&#9670;</span>
     </div>
   </div>
   <div class="trust-bar">
     <div class="trust-badge"><div class="icon">&#128666;</div><div><strong>Free Delivery</strong><span>On orders above &#8377;999</span></div></div>
     <div class="trust-badge"><div class="icon">&#128274;</div><div><strong>Secure Payment</strong><span>Razorpay — UPI, Cards, Net Banking</span></div></div>
     <div class="trust-badge"><div class="icon">&#9995;</div><div><strong>Handcrafted</strong><span>Unique artisan pieces</span></div></div>
-    <div class="trust-badge"><div class="icon">&#8617;</div><div><strong>Easy Returns</strong><span>Hassle-free 7 day return</span></div></div>
+    <div class="trust-badge"><div class="icon">&#127381;</div><div><strong>10% Off</strong><span>Use code WELCOME10</span></div></div>
   </div>
   <h2 style="text-align:center;font-family:'Playfair Display';">Our Collections</h2>
   <div class="grid">
@@ -916,8 +979,6 @@ body{margin:0;font-family:Poppins;background:#fff;}
     <div class="card cat-card" onclick="openCategory('Bangles')"><img src="banglesdisplay.jpeg"><p>Bangles</p></div>
   </div>
 </div>
-
-<!-- SHOP -->
 <div id="shop" class="hidden">
   <button class="btn-ghost" onclick="showPage('home')" style="margin:20px;">&#8592; Back</button>
   <h2 style="text-align:center;font-family:'Playfair Display';">Collections</h2>
@@ -928,14 +989,8 @@ body{margin:0;font-family:Poppins;background:#fff;}
     <div class="card cat-card" onclick="openCategory('Bangles')"><img src="banglesdisplay.jpeg"><p>Bangles</p></div>
   </div>
 </div>
-
-<!-- PRODUCTS -->
 <div id="products" class="hidden"></div>
-
-<!-- PRODUCT DETAIL -->
 <div id="productDetail" class="hidden"></div>
-
-<!-- CART -->
 <div id="cartPage" class="hidden">
   <div class="center-box">
     <button class="btn-ghost" onclick="showPage('shop')" style="margin-bottom:16px;">&#8592; Back</button>
@@ -943,8 +998,6 @@ body{margin:0;font-family:Poppins;background:#fff;}
     <div id="cartItems"></div>
   </div>
 </div>
-
-<!-- CHECKOUT -->
 <div id="checkout" class="hidden">
   <div class="center-box">
     <button class="btn-ghost" onclick="showCart()" style="margin-bottom:16px;">&#8592; Back</button>
@@ -957,22 +1010,14 @@ body{margin:0;font-family:Poppins;background:#fff;}
     <input id="co-city" class="fi" placeholder="City">
     <input id="co-pincode" class="fi" type="tel" placeholder="Pincode" maxlength="6" oninput="this.value=this.value.replace(/\D/g,'')">
     <br>
-    <button id="payBtn" class="btn-primary" onclick="proceedToPayment()" style="margin-top:15px;width:100%;font-size:16px;padding:16px;">
-      &#128274; Pay Securely with Razorpay
-    </button>
+    <button id="payBtn" class="btn-primary" onclick="proceedToPayment()" style="margin-top:15px;width:100%;font-size:16px;padding:16px;">&#128274; Pay Securely with Razorpay</button>
     <p style="font-size:12px;color:#aaa;margin-top:10px;text-align:center;">UPI • Cards • Net Banking • Wallets — all supported</p>
   </div>
 </div>
-
-<!-- SUCCESS -->
 <div id="successPage" class="hidden">
   <div class="center-box"><div id="successMsg"></div></div>
 </div>
-
-<!-- PROFILE PAGE -->
 <div id="profilePage" class="hidden"></div>
-
-<!-- ADMIN LOGIN -->
 <div id="adminLogin" class="hidden">
   <div class="admin-login-box">
     <button class="btn-ghost" onclick="showPage('home')" style="margin-bottom:20px;">&#8592; Back</button>
@@ -982,8 +1027,6 @@ body{margin:0;font-family:Poppins;background:#fff;}
     <button class="btn-primary" onclick="checkAdminPassword()" style="width:100%;margin-top:10px;">Login</button>
   </div>
 </div>
-
-<!-- ADMIN PANEL -->
 <div id="adminPanel" class="hidden">
   <div class="admin-panel">
     <button class="btn-ghost" onclick="showPage('home')" style="margin-bottom:20px;">&#8592; Back</button>
@@ -994,8 +1037,6 @@ body{margin:0;font-family:Poppins;background:#fff;}
     <button class="btn-primary" onclick="restockAll()" style="margin-top:20px;">&#8635; Restock All Items to 2</button>
   </div>
 </div>
-
-<!-- AUTH POPUP -->
 <div id="authOverlay" class="auth-overlay">
   <div class="auth-box">
     <button class="auth-close" onclick="closeAuth()">&#10005;</button>
@@ -1020,8 +1061,6 @@ body{margin:0;font-family:Poppins;background:#fff;}
     </div>
   </div>
 </div>
-
-<!-- CUSTOMIZE POPUP -->
 <div id="customizePopup" class="popup-overlay">
   <div class="popup-box">
     <button class="close-btn" onclick="closeCustomize()">&#10005;</button>
@@ -1047,16 +1086,11 @@ body{margin:0;font-family:Poppins;background:#fff;}
       <div id="uploadPreview" class="upload-preview"></div>
     </div>
     <div class="url-divider">or paste image link from Google</div>
-    <div class="form-group">
-      <label>Design Image Link <span class="optional-tag">(optional)</span></label>
-      <input id="cImageUrl" type="url" placeholder="https://images.google.com/...">
-    </div>
+    <div class="form-group"><label>Design Image Link <span class="optional-tag">(optional)</span></label><input id="cImageUrl" type="url" placeholder="https://images.google.com/..."></div>
     <div id="statusMsg" class="status-msg"></div>
     <button id="submitBtn" class="submit-btn" onclick="sendCustomize()">Submit Request</button>
   </div>
 </div>
-
-<!-- NOTIFY ME POPUP -->
 <div id="notifyOverlay" class="notify-overlay">
   <div class="notify-box">
     <button class="notify-close" onclick="closeNotify()">&#10005;</button>
@@ -1068,11 +1102,8 @@ body{margin:0;font-family:Poppins;background:#fff;}
     <div id="notifySuccessMsg" class="notify-success">&#10003; Saved! We will contact you when it's back.</div>
   </div>
 </div>
-
-<!-- ZOOM OVERLAY -->
 <div id="zoomOverlay" class="zoom-overlay" onclick="closeZoom()">
   <img id="zoomImg" src="" alt="Zoomed product">
 </div>
-
 </body>
 </html>
