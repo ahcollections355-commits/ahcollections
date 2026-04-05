@@ -176,12 +176,21 @@ window.renderProfile=async function(){
         <div class="p-avatar-row"><div class="p-avatar">${ini}</div><div><div style="font-size:20px;font-weight:600;color:#222;">${u.name||""}</div><div style="font-size:13px;color:#aaa;">${currentUser.email}</div></div></div>
         <div class="ptabs"><button class="ptab active" onclick="switchPTab('address',this)">&#128204; Saved Address</button><button class="ptab" onclick="switchPTab('orders',this)">&#128722; Order History</button></div>
         <div id="ptab-address">
-          <p style="font-size:13px;color:#aaa;margin:-8px 0 18px;">Saved address auto-fills at checkout.</p>
-          <div class="pfield"><label>Full Name</label><input id="pName" value="${esc(a.fullname||u.name||"")}"></div>
-          <div class="pfield"><label>Phone</label><input id="pPhone" type="tel" value="${esc(a.phone||"")}" maxlength="10" oninput="this.value=this.value.replace(/\\D/g,'')"></div>
-          <div class="pfield"><label>Address</label><input id="pAddress" value="${esc(a.address||"")}"></div>
-          <div class="pgrid2"><div class="pfield"><label>City</label><input id="pCity" value="${esc(a.city||"")}"></div><div class="pfield"><label>Pincode</label><input id="pPincode" value="${esc(a.pincode||"")}" maxlength="6" oninput="this.value=this.value.replace(/\\D/g,'')"></div></div>
-          <div style="display:flex;align-items:center;margin-top:12px;"><button class="save-addr-btn" onclick="saveAddress()">Save Address &#10003;</button><span id="addrSavedMsg" style="font-size:13px;color:#1a7a3a;margin-left:12px;display:none;">&#10003; Saved!</span></div>
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+            <p style="font-size:13px;color:#aaa;margin:0;">Saved address auto-fills at checkout.</p>
+            <button id="editAddrBtn" onclick="toggleEditAddress()" style="padding:7px 16px;background:none;border:1.5px solid #D4AF37;color:#D4AF37;border-radius:20px;font-family:Poppins;font-size:12px;cursor:pointer;font-weight:500;">&#9998; Edit</button>
+          </div>
+          <div class="pfield"><label>Full Name</label><input id="pName" value="${esc(a.fullname||u.name||"")}" readonly style="background:#f9f9f9;color:#555;cursor:default;border-color:#f0e8d0;"></div>
+          <div class="pfield"><label>Phone</label><input id="pPhone" type="tel" value="${esc(a.phone||"")}" maxlength="10" oninput="this.value=this.value.replace(/\\D/g,'')" readonly style="background:#f9f9f9;color:#555;cursor:default;border-color:#f0e8d0;"></div>
+          <div class="pfield"><label>Address</label><input id="pAddress" value="${esc(a.address||"")}" readonly style="background:#f9f9f9;color:#555;cursor:default;border-color:#f0e8d0;"></div>
+          <div class="pgrid2"><div class="pfield"><label>City</label><input id="pCity" value="${esc(a.city||"")}" readonly style="background:#f9f9f9;color:#555;cursor:default;border-color:#f0e8d0;"></div><div class="pfield"><label>Pincode</label><input id="pPincode" value="${esc(a.pincode||"")}" maxlength="6" oninput="this.value=this.value.replace(/\\D/g,'')" readonly style="background:#f9f9f9;color:#555;cursor:default;border-color:#f0e8d0;"></div></div>
+          <div id="addrActions" style="display:none;flex-direction:column;gap:8px;margin-top:14px;">
+            <div style="display:flex;align-items:center;gap:10px;">
+              <button class="save-addr-btn" onclick="saveAddress()">Save Changes &#10003;</button>
+              <button onclick="cancelEditAddress()" style="padding:11px 20px;background:none;border:1px solid #ddd;color:#888;border-radius:8px;font-family:Poppins;font-size:13px;cursor:pointer;">Cancel</button>
+              <span id="addrSavedMsg" style="font-size:13px;color:#1a7a3a;display:none;">&#10003; Saved!</span>
+            </div>
+          </div>
         </div>
         <div id="ptab-orders" class="hidden">${ordersHtml}</div>
       </div>
@@ -193,6 +202,25 @@ window.switchPTab=function(tab,btn){
   document.getElementById("ptab-address").classList.toggle("hidden",tab!=="address");
   document.getElementById("ptab-orders").classList.toggle("hidden",tab!=="orders");
 }
+window.toggleEditAddress=function(){
+  const inputs=["pName","pPhone","pAddress","pCity","pPincode"];
+  inputs.forEach(id=>{
+    const el=document.getElementById(id);if(!el)return;
+    el.removeAttribute("readonly");el.style.background="";el.style.color="";el.style.cursor="";el.style.borderColor="";
+  });
+  document.getElementById("editAddrBtn").style.display="none";
+  document.getElementById("addrActions").style.display="flex";
+  document.getElementById("pName").focus();
+}
+window.cancelEditAddress=function(){
+  const inputs=["pName","pPhone","pAddress","pCity","pPincode"];
+  inputs.forEach(id=>{
+    const el=document.getElementById(id);if(!el)return;
+    el.setAttribute("readonly","");el.style.background="#f9f9f9";el.style.color="#555";el.style.cursor="default";el.style.borderColor="#f0e8d0";
+  });
+  document.getElementById("editAddrBtn").style.display="inline-block";
+  document.getElementById("addrActions").style.display="none";
+}
 window.saveAddress=async function(){
   if(!currentUser)return;
   await updateDoc(doc(db,"users",currentUser.uid),{address:{
@@ -200,7 +228,8 @@ window.saveAddress=async function(){
     address:document.getElementById("pAddress").value.trim(),city:document.getElementById("pCity").value.trim(),
     pincode:document.getElementById("pPincode").value.trim()
   }});
-  const m=document.getElementById("addrSavedMsg");m.style.display="inline";setTimeout(()=>m.style.display="none",2500);
+  const m=document.getElementById("addrSavedMsg");m.style.display="inline";
+  setTimeout(()=>{m.style.display="none";cancelEditAddress();},1500);
 }
 
 window.updateCart=function(){const el=document.getElementById("cartCount");if(el)el.innerText=cart.reduce((s,i)=>s+i.qty,0);}
