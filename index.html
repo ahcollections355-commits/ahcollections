@@ -29,8 +29,19 @@ const db = getFirestore(app);
 const RAZORPAY_KEY_ID = "rzp_test_SYubgFBZsAPOAu";
 const CREATE_ORDER_URL = "https://createorder-qhvjtgjmaq-uc.a.run.app";
 const VERIFY_PAYMENT_URL = "https://verifypayment-qhvjtgjmaq-uc.a.run.app";
-const DELIVERY_CHARGE = 60;
 const FREE_DELIVERY_ABOVE = 999;
+
+// ── DELIVERY BY LOCATION ──
+const TANUKU_PINCODES = ["534211","534212","534213","534214","534215","534216"];
+const AP_DISTRICTS = ["west godavari","eluru","krishna","guntur","prakasam","nellore","kurnool","kadapa","anantapur","chittoor","east godavari","rajamahendravaram","kakinada","vizianagaram","visakhapatnam","srikakulam","parvathipuram","alluri","anakapalli","konaseema","ntr","bapatla","palnadu","sri sathya sai","annamayya","tirupati","chittoor"];
+
+function getDeliveryCharge(city, pincode) {
+  const c = (city||"").toLowerCase().trim();
+  const p = (pincode||"").trim();
+  if(c === "tanuku" || TANUKU_PINCODES.includes(p)) return 0;
+  for(const d of AP_DISTRICTS){ if(c.includes(d)||d.includes(c)) return 50; }
+  return 80;
+}
 
 // ── COUPON CONFIG ──
 const VALID_COUPONS = {
@@ -57,244 +68,162 @@ const ALL_PRODUCTS = [
   {name:"Pink Green Bangles",price:799,image:"bangles5.jpeg",cat:"Bangles",desc:"Playful pink and green silk bangles with kundan flowers. Perfect for celebrations."}
 ];
 
-let currentUser = null;
-let stockData = {};
-let cart = [];
-let currentOrderDetails = {};
-let selectedColour = "";
-let uploadedFileBase64 = "";
-let uploadedFileName = "";
-let currentNotifyProduct = "";
-let currentProduct = null;
-let appliedCoupon = null;
+let currentUser=null, stockData={}, cart=[], currentOrderDetails={};
+let selectedColour="", uploadedFileBase64="", uploadedFileName="";
+let currentNotifyProduct="", currentProduct=null, appliedCoupon=null;
 
-async function initStock() {
-  for (const p of ALL_PRODUCTS) {
-    const ref = doc(db, "stock", p.name);
-    const snap = await getDoc(ref);
-    if (!snap.exists()) await setDoc(ref, { qty: 2, name: p.name });
+async function initStock(){
+  for(const p of ALL_PRODUCTS){
+    const ref=doc(db,"stock",p.name); const snap=await getDoc(ref);
+    if(!snap.exists()) await setDoc(ref,{qty:2,name:p.name});
   }
 }
-
-function listenToStock() {
-  onSnapshot(collection(db, "stock"), (snap) => {
-    snap.forEach(d => { stockData[d.id] = d.data().qty; });
-    const productsEl = document.getElementById("products");
-    if (productsEl && !productsEl.classList.contains("hidden")) {
-      const currentCat = productsEl.getAttribute("data-cat");
-      if (currentCat) renderCategory(currentCat);
-    }
+function listenToStock(){
+  onSnapshot(collection(db,"stock"),(snap)=>{
+    snap.forEach(d=>{stockData[d.id]=d.data().qty;});
+    const el=document.getElementById("products");
+    if(el&&!el.classList.contains("hidden")){const c=el.getAttribute("data-cat");if(c)renderCategory(c);}
   });
 }
-
-onAuthStateChanged(auth, async (user) => {
-  currentUser = user;
-  renderNav();
-  if (user) {
-    const uRef = doc(db, "users", user.uid);
-    const uSnap = await getDoc(uRef);
-    if (!uSnap.exists()) {
-      await setDoc(uRef, { name: user.displayName || "", email: user.email, address: {fullname:"",phone:"",address:"",city:"",pincode:""}, createdAt: serverTimestamp() });
-    }
+onAuthStateChanged(auth,async(user)=>{
+  currentUser=user; renderNav();
+  if(user){
+    const uRef=doc(db,"users",user.uid); const uSnap=await getDoc(uRef);
+    if(!uSnap.exists()) await setDoc(uRef,{name:user.displayName||"",email:user.email,address:{fullname:"",phone:"",address:"",city:"",pincode:""},createdAt:serverTimestamp()});
   }
 });
 
-window.renderNav = function() {
-  const nr = document.getElementById("navRight"); if (!nr) return;
-  if (currentUser) {
-    const ini = (currentUser.displayName || currentUser.email || "U").charAt(0).toUpperCase();
-    nr.innerHTML = `
-      <a onclick="showPage('home')">Home</a>
-      <a onclick="showPage('shop')">Shop</a>
-      <a onclick="showCart()">Cart &#128722; (<span id="cartCount">0</span>)</a>
-      <button class="nav-avatar" onclick="showPage('profilePage')" title="My Account">${ini}</button>
-      <a onclick="doLogout()" style="font-size:12px;color:#999;">Logout</a>`;
+window.renderNav=function(){
+  const nr=document.getElementById("navRight"); if(!nr) return;
+  if(currentUser){
+    const ini=(currentUser.displayName||currentUser.email||"U").charAt(0).toUpperCase();
+    nr.innerHTML=`<a onclick="showPage('home')">Home</a><a onclick="showPage('shop')">Shop</a><a onclick="showCart()">Cart &#128722; (<span id="cartCount">0</span>)</a><button class="nav-avatar" onclick="showPage('profilePage')" title="My Account">${ini}</button><a onclick="doLogout()" style="font-size:12px;color:#999;">Logout</a>`;
   } else {
-    nr.innerHTML = `
-      <a onclick="showPage('home')">Home</a>
-      <a onclick="showPage('shop')">Shop</a>
-      <a onclick="showCart()">Cart &#128722; (<span id="cartCount">0</span>)</a>
-      <a onclick="openAuth('login')" style="font-weight:500;">Login</a>
-      <a onclick="openAuth('signup')" style="background:#D4AF37;color:#fff;padding:7px 16px;border-radius:20px;font-size:13px;">Sign Up</a>`;
+    nr.innerHTML=`<a onclick="showPage('home')">Home</a><a onclick="showPage('shop')">Shop</a><a onclick="showCart()">Cart &#128722; (<span id="cartCount">0</span>)</a><a onclick="openAuth('login')" style="font-weight:500;">Login</a><a onclick="openAuth('signup')" style="background:#D4AF37;color:#fff;padding:7px 16px;border-radius:20px;font-size:13px;">Sign Up</a>`;
   }
   updateCart();
 }
 
-window.showPage = function(p) {
-  ["home","shop","products","cartPage","checkout","successPage","adminLogin","adminPanel","profilePage","productDetail"]
-    .forEach(id => { const el=document.getElementById(id); if(el) el.classList.add("hidden"); });
-  const el = document.getElementById(p);
-  if (el) { el.classList.remove("hidden"); window.scrollTo(0,0); }
-  if (p === "profilePage") renderProfile();
-  if (p === "adminPanel") renderAdminPanel();
+window.showPage=function(p){
+  ["home","shop","products","cartPage","checkout","successPage","adminLogin","adminPanel","profilePage","productDetail"].forEach(id=>{const el=document.getElementById(id);if(el)el.classList.add("hidden");});
+  const el=document.getElementById(p); if(el){el.classList.remove("hidden");window.scrollTo(0,0);}
+  if(p==="profilePage") renderProfile();
+  if(p==="adminPanel") renderAdminPanel();
 }
+window.addEventListener("hashchange",()=>{if(window.location.hash==="#admin-ah2024"){window.location.hash="";showPage("adminLogin");}});
+window.addEventListener("load",()=>{if(window.location.hash==="#admin-ah2024"){window.location.hash="";showPage("adminLogin");}});
 
-window.addEventListener("hashchange", () => {
-  if (window.location.hash === "#admin-ah2024") { window.location.hash = ""; showPage("adminLogin"); }
-});
-window.addEventListener("load", () => {
-  if (window.location.hash === "#admin-ah2024") { window.location.hash = ""; showPage("adminLogin"); }
-});
-
-window.openAuth = function(tab) {
-  document.getElementById("authOverlay").style.display = "flex";
-  document.body.style.overflow = "hidden";
-  switchAuthTab(tab);
-  document.getElementById("authMsg").className = "auth-msg";
-  document.getElementById("authMsg").innerText = "";
-  ["snName","snEmail","snPw","liEmail","liPw"].forEach(id => { const el=document.getElementById(id); if(el) el.value=""; });
+window.openAuth=function(tab){
+  document.getElementById("authOverlay").style.display="flex"; document.body.style.overflow="hidden";
+  switchAuthTab(tab); document.getElementById("authMsg").className="auth-msg"; document.getElementById("authMsg").innerText="";
+  ["snName","snEmail","snPw","liEmail","liPw"].forEach(id=>{const el=document.getElementById(id);if(el)el.value="";});
 }
-window.closeAuth = function() { document.getElementById("authOverlay").style.display="none"; document.body.style.overflow="auto"; }
-window.switchAuthTab = function(tab) {
-  document.getElementById("tabLogin").classList.toggle("active", tab==="login");
-  document.getElementById("tabSignup").classList.toggle("active", tab==="signup");
-  document.getElementById("loginForm").classList.toggle("hidden", tab!=="login");
-  document.getElementById("signupForm").classList.toggle("hidden", tab!=="signup");
+window.closeAuth=function(){document.getElementById("authOverlay").style.display="none";document.body.style.overflow="auto";}
+window.switchAuthTab=function(tab){
+  document.getElementById("tabLogin").classList.toggle("active",tab==="login");
+  document.getElementById("tabSignup").classList.toggle("active",tab==="signup");
+  document.getElementById("loginForm").classList.toggle("hidden",tab!=="login");
+  document.getElementById("signupForm").classList.toggle("hidden",tab!=="signup");
 }
-function showAuthMsg(msg, type) { const el=document.getElementById("authMsg"); el.className="auth-msg "+type; el.innerText=msg; }
+function showAuthMsg(msg,type){const el=document.getElementById("authMsg");el.className="auth-msg "+type;el.innerText=msg;}
 
-window.submitSignup = async function() {
-  const name=document.getElementById("snName").value.trim();
-  const email=document.getElementById("snEmail").value.trim();
-  const pw=document.getElementById("snPw").value;
+window.submitSignup=async function(){
+  const name=document.getElementById("snName").value.trim(),email=document.getElementById("snEmail").value.trim(),pw=document.getElementById("snPw").value;
   if(!name||!email||!pw){showAuthMsg("Please fill all fields.","error");return;}
   if(pw.length<6){showAuthMsg("Password must be at least 6 characters.","error");return;}
-  const btn=document.getElementById("signupBtn"); btn.disabled=true; btn.innerText="Creating...";
-  try {
+  const btn=document.getElementById("signupBtn");btn.disabled=true;btn.innerText="Creating...";
+  try{
     const cred=await createUserWithEmailAndPassword(auth,email,pw);
     await updateProfile(cred.user,{displayName:name});
     await setDoc(doc(db,"users",cred.user.uid),{name,email,address:{fullname:name,phone:"",address:"",city:"",pincode:""},createdAt:serverTimestamp()});
     showAuthMsg("Account created! Welcome, "+name+" ✨","success");
     setTimeout(()=>{closeAuth();renderNav();},1200);
-  } catch(e) {
-    showAuthMsg(e.code==="auth/email-already-in-use"?"This email is already registered.":e.message,"error");
-    btn.disabled=false; btn.innerText="Create Account →";
-  }
+  }catch(e){showAuthMsg(e.code==="auth/email-already-in-use"?"This email is already registered.":e.message,"error");btn.disabled=false;btn.innerText="Create Account →";}
 }
-
-window.submitLogin = async function() {
-  const email=document.getElementById("liEmail").value.trim();
-  const pw=document.getElementById("liPw").value;
+window.submitLogin=async function(){
+  const email=document.getElementById("liEmail").value.trim(),pw=document.getElementById("liPw").value;
   if(!email||!pw){showAuthMsg("Please fill all fields.","error");return;}
-  const btn=document.getElementById("loginBtn"); btn.disabled=true; btn.innerText="Logging in...";
-  try {
+  const btn=document.getElementById("loginBtn");btn.disabled=true;btn.innerText="Logging in...";
+  try{
     await signInWithEmailAndPassword(auth,email,pw);
     showAuthMsg("Welcome back! ✨","success");
     setTimeout(()=>{closeAuth();renderNav();},1000);
-  } catch(e) {
-    showAuthMsg(e.code==="auth/wrong-password"||e.code==="auth/user-not-found"?"Incorrect email or password.":e.message,"error");
-    btn.disabled=false; btn.innerText="Login →";
-  }
+  }catch(e){showAuthMsg(e.code==="auth/wrong-password"||e.code==="auth/user-not-found"?"Incorrect email or password.":e.message,"error");btn.disabled=false;btn.innerText="Login →";}
 }
+window.doLogout=async function(){await signOut(auth);renderNav();showPage("home");}
 
-window.doLogout = async function() { await signOut(auth); renderNav(); showPage("home"); }
-
-window.renderProfile = async function() {
+window.renderProfile=async function(){
   if(!currentUser){showPage("home");openAuth("login");return;}
   const uSnap=await getDoc(doc(db,"users",currentUser.uid));
-  const u=uSnap.data()||{}; const a=u.address||{};
+  const u=uSnap.data()||{};const a=u.address||{};
   const ini=(u.name||currentUser.email||"U").charAt(0).toUpperCase();
   let ordersHtml=`<div class="no-orders">&#128722; No orders yet.<br><span style="font-size:12px;margin-top:8px;display:block;">Your confirmed orders will appear here.</span></div>`;
-  try {
+  try{
     let oSnap;
-    try { oSnap=await getDocs(query(collection(db,"orders"),where("uid","==",currentUser.uid),orderBy("createdAt","desc"))); }
-    catch(e) { oSnap=await getDocs(query(collection(db,"orders"),where("uid","==",currentUser.uid))); }
+    try{oSnap=await getDocs(query(collection(db,"orders"),where("uid","==",currentUser.uid),orderBy("createdAt","desc")));}
+    catch(e){oSnap=await getDocs(query(collection(db,"orders"),where("uid","==",currentUser.uid)));}
     if(!oSnap.empty){
       ordersHtml=oSnap.docs.map(d=>{
         const o=d.data();
-        return `<div class="order-card">
-          <div class="order-head">
-            <div><div style="font-size:14px;font-weight:600;color:#333;">Order #${o.orderId}</div><div style="font-size:12px;color:#aaa;">${o.date}</div></div>
-            <div style="text-align:right;"><div class="order-status">&#10003; Confirmed</div><div class="order-total" style="margin-top:4px;">&#8377;${o.total}</div></div>
-          </div>
-          <div style="font-size:13px;color:#555;line-height:1.8;">${(o.items||'').replace(/\n/g,'<br>')}</div>
-          <div style="font-size:12px;color:#ccc;margin-top:8px;">Payment ID: ${o.paymentId||o.txnId||''}</div>
-        </div>`;
+        return `<div class="order-card"><div class="order-head"><div><div style="font-size:14px;font-weight:600;color:#333;">Order #${o.orderId}</div><div style="font-size:12px;color:#aaa;">${o.date}</div></div><div style="text-align:right;"><div class="order-status">&#10003; Confirmed</div><div class="order-total" style="margin-top:4px;">&#8377;${o.total}</div></div></div><div style="font-size:13px;color:#555;line-height:1.8;">${(o.items||'').replace(/\n/g,'<br>')}</div><div style="font-size:12px;color:#ccc;margin-top:8px;">Payment ID: ${o.paymentId||o.txnId||''}</div></div>`;
       }).join("");
     }
-  } catch(e){ ordersHtml='<div style="padding:20px;color:#e74c3c;font-size:13px;">Could not load orders.</div>'; }
-
+  }catch(e){ordersHtml='<div style="padding:20px;color:#e74c3c;font-size:13px;">Could not load orders.</div>';}
   document.getElementById("profilePage").innerHTML=`
     <div class="profile-wrap">
       <button class="btn-ghost" onclick="showPage('home')" style="margin-bottom:20px;">&#8592; Back</button>
       <div class="profile-card">
-        <div class="p-avatar-row">
-          <div class="p-avatar">${ini}</div>
-          <div><div style="font-size:20px;font-weight:600;color:#222;">${u.name||""}</div><div style="font-size:13px;color:#aaa;">${currentUser.email}</div></div>
-        </div>
-        <div class="ptabs">
-          <button class="ptab active" onclick="switchPTab('address',this)">&#128204; Saved Address</button>
-          <button class="ptab" onclick="switchPTab('orders',this)">&#128722; Order History</button>
-        </div>
+        <div class="p-avatar-row"><div class="p-avatar">${ini}</div><div><div style="font-size:20px;font-weight:600;color:#222;">${u.name||""}</div><div style="font-size:13px;color:#aaa;">${currentUser.email}</div></div></div>
+        <div class="ptabs"><button class="ptab active" onclick="switchPTab('address',this)">&#128204; Saved Address</button><button class="ptab" onclick="switchPTab('orders',this)">&#128722; Order History</button></div>
         <div id="ptab-address">
           <p style="font-size:13px;color:#aaa;margin:-8px 0 18px;">Saved address auto-fills at checkout.</p>
           <div class="pfield"><label>Full Name</label><input id="pName" value="${esc(a.fullname||u.name||"")}"></div>
           <div class="pfield"><label>Phone</label><input id="pPhone" type="tel" value="${esc(a.phone||"")}" maxlength="10" oninput="this.value=this.value.replace(/\\D/g,'')"></div>
           <div class="pfield"><label>Address</label><input id="pAddress" value="${esc(a.address||"")}"></div>
-          <div class="pgrid2">
-            <div class="pfield"><label>City</label><input id="pCity" value="${esc(a.city||"")}"></div>
-            <div class="pfield"><label>Pincode</label><input id="pPincode" value="${esc(a.pincode||"")}" maxlength="6" oninput="this.value=this.value.replace(/\\D/g,'')"></div>
-          </div>
-          <div style="display:flex;align-items:center;margin-top:12px;">
-            <button class="save-addr-btn" onclick="saveAddress()">Save Address &#10003;</button>
-            <span id="addrSavedMsg" style="font-size:13px;color:#1a7a3a;margin-left:12px;display:none;">&#10003; Saved!</span>
-          </div>
+          <div class="pgrid2"><div class="pfield"><label>City</label><input id="pCity" value="${esc(a.city||"")}"></div><div class="pfield"><label>Pincode</label><input id="pPincode" value="${esc(a.pincode||"")}" maxlength="6" oninput="this.value=this.value.replace(/\\D/g,'')"></div></div>
+          <div style="display:flex;align-items:center;margin-top:12px;"><button class="save-addr-btn" onclick="saveAddress()">Save Address &#10003;</button><span id="addrSavedMsg" style="font-size:13px;color:#1a7a3a;margin-left:12px;display:none;">&#10003; Saved!</span></div>
         </div>
         <div id="ptab-orders" class="hidden">${ordersHtml}</div>
       </div>
     </div>`;
 }
-
 function esc(s){return String(s).replace(/"/g,"&quot;").replace(/</g,"&lt;");}
-window.switchPTab = function(tab,btn){
-  document.querySelectorAll(".ptab").forEach(b=>b.classList.remove("active")); btn.classList.add("active");
+window.switchPTab=function(tab,btn){
+  document.querySelectorAll(".ptab").forEach(b=>b.classList.remove("active"));btn.classList.add("active");
   document.getElementById("ptab-address").classList.toggle("hidden",tab!=="address");
   document.getElementById("ptab-orders").classList.toggle("hidden",tab!=="orders");
 }
-window.saveAddress = async function(){
+window.saveAddress=async function(){
   if(!currentUser)return;
   await updateDoc(doc(db,"users",currentUser.uid),{address:{
-    fullname:document.getElementById("pName").value.trim(),
-    phone:document.getElementById("pPhone").value.trim(),
-    address:document.getElementById("pAddress").value.trim(),
-    city:document.getElementById("pCity").value.trim(),
+    fullname:document.getElementById("pName").value.trim(),phone:document.getElementById("pPhone").value.trim(),
+    address:document.getElementById("pAddress").value.trim(),city:document.getElementById("pCity").value.trim(),
     pincode:document.getElementById("pPincode").value.trim()
   }});
-  const m=document.getElementById("addrSavedMsg"); m.style.display="inline";
-  setTimeout(()=>m.style.display="none",2500);
+  const m=document.getElementById("addrSavedMsg");m.style.display="inline";setTimeout(()=>m.style.display="none",2500);
 }
 
-window.updateCart = function(){const el=document.getElementById("cartCount");if(el)el.innerText=cart.reduce((s,i)=>s+i.qty,0);}
-
-window.addToCart = function(name,price,image,btn){
-  const inCart=cart.find(i=>i.name===name);
-  const cartQty=inCart?inCart.qty:0;
+window.updateCart=function(){const el=document.getElementById("cartCount");if(el)el.innerText=cart.reduce((s,i)=>s+i.qty,0);}
+window.addToCart=function(name,price,image,btn){
+  const inCart=cart.find(i=>i.name===name),cartQty=inCart?inCart.qty:0;
   const maxStock=stockData[name]!==undefined?stockData[name]:2;
   if(cartQty>=maxStock){alert("Sorry! No more stock available.");return;}
   let f=cart.find(i=>i.name===name);
   if(f){f.qty++;}else{cart.push({name,price,image,qty:1});}
   updateCart();
-  if(btn){
-    const orig=btn.innerText; btn.innerText="Added ✓"; btn.style.background="#D4AF37"; btn.style.color="#fff";
-    setTimeout(()=>{btn.innerText=orig;btn.style.background="";btn.style.color="";},900);
-  }
+  if(btn){const orig=btn.innerText;btn.innerText="Added ✓";btn.style.background="#D4AF37";btn.style.color="#fff";setTimeout(()=>{btn.innerText=orig;btn.style.background="";btn.style.color="";},900);}
 }
 
-window.openProductDetail = function(name) {
-  const p = ALL_PRODUCTS.find(x => x.name === name); if(!p) return;
-  currentProduct = p;
-  const qty = stockData[p.name] !== undefined ? stockData[p.name] : 2;
-  const isSoldOut = qty <= 0;
-  document.getElementById("productDetail").innerHTML = `
+window.openProductDetail=function(name){
+  const p=ALL_PRODUCTS.find(x=>x.name===name);if(!p)return;
+  currentProduct=p;
+  const qty=stockData[p.name]!==undefined?stockData[p.name]:2;
+  const isSoldOut=qty<=0;
+  document.getElementById("productDetail").innerHTML=`
     <div style="max-width:900px;margin:0 auto;padding:30px 20px;">
       <button class="btn-ghost" onclick="goBackFromDetail()" style="margin-bottom:24px;">&#8592; Back</button>
       <div class="detail-layout">
-        <div class="detail-img-wrap">
-          <div class="detail-img-zoom">
-            <img id="detailMainImg" src="${p.image}" alt="${p.name}" onclick="openZoom('${p.image}')">
-            <div class="zoom-hint">&#128269; Click to zoom</div>
-          </div>
-        </div>
+        <div class="detail-img-wrap"><div class="detail-img-zoom"><img id="detailMainImg" src="${p.image}" alt="${p.name}" onclick="openZoom('${p.image}')"><div class="zoom-hint">&#128269; Click to zoom</div></div></div>
         <div class="detail-info">
           <div style="font-size:12px;color:#D4AF37;text-transform:uppercase;letter-spacing:2px;margin-bottom:8px;">${p.cat}</div>
           <h1 style="font-family:'Playfair Display';font-size:28px;margin:0 0 12px;color:#222;">${p.name}</h1>
@@ -305,13 +234,7 @@ window.openProductDetail = function(name) {
             ${(isSoldOut||qty===1)?`<div style="background:#fffdf5;border:1px solid #f0e8d0;border-radius:8px;padding:10px 16px;font-size:13px;"><span style="color:#aaa;display:block;font-size:11px;margin-bottom:2px;">STOCK</span><span style="color:${isSoldOut?'#e74c3c':'#e67e22'};font-weight:600;">${isSoldOut?'Sold Out':'Last 1!'}</span></div>`:""}
             <div style="background:#fffdf5;border:1px solid #f0e8d0;border-radius:8px;padding:10px 16px;font-size:13px;"><span style="color:#aaa;display:block;font-size:11px;margin-bottom:2px;">DELIVERY</span><span style="color:#555;">3-4 Days</span></div>
           </div>
-          ${isSoldOut
-            ? `<button class="btn-sold" onclick="openNotify('${p.name}')" style="width:auto;padding:13px 32px;font-size:15px;">&#128276; Notify Me When Back</button>`
-            : `<div style="display:flex;gap:12px;flex-wrap:wrap;">
-                <button class="btn-primary" style="flex:1;min-width:140px;font-size:15px;padding:14px;" onclick="addToCartFromDetail()">&#128722; Add to Cart</button>
-                <button class="btn" style="flex:1;min-width:140px;font-size:15px;padding:14px;" onclick="addToCartFromDetail();showCart();">Buy Now</button>
-              </div>`
-          }
+          ${isSoldOut?`<button class="btn-sold" onclick="openNotify('${p.name}')" style="width:auto;padding:13px 32px;font-size:15px;">&#128276; Notify Me When Back</button>`:`<div style="display:flex;gap:12px;flex-wrap:wrap;"><button class="btn-primary" style="flex:1;min-width:140px;font-size:15px;padding:14px;" onclick="addToCartFromDetail()">&#128722; Add to Cart</button><button class="btn" style="flex:1;min-width:140px;font-size:15px;padding:14px;" onclick="addToCartFromDetail();showCart();">Buy Now</button></div>`}
           ${p.cat==="Bangles"?`<button class="btn-ghost" onclick="openCustomize()" style="margin-top:12px;width:100%;">&#10024; Customize This Design</button>`:""}
           <div style="margin-top:24px;padding-top:20px;border-top:1px solid #f0e8d0;">
             <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;"><span style="font-size:20px;">&#128666;</span><span style="font-size:13px;color:#555;">Free delivery on orders above &#8377;999</span></div>
@@ -323,199 +246,126 @@ window.openProductDetail = function(name) {
     </div>`;
   showPage("productDetail");
 }
-
-window.addToCartFromDetail = function(){
-  if(!currentProduct)return;
-  const p=currentProduct;
-  const inCart=cart.find(i=>i.name===p.name);
-  const cartQty=inCart?inCart.qty:0;
+window.addToCartFromDetail=function(){
+  if(!currentProduct)return;const p=currentProduct;
+  const inCart=cart.find(i=>i.name===p.name),cartQty=inCart?inCart.qty:0;
   const maxStock=stockData[p.name]!==undefined?stockData[p.name]:2;
   if(cartQty>=maxStock){alert("Sorry! No more stock available.");return;}
   let f=cart.find(i=>i.name===p.name);
   if(f){f.qty++;}else{cart.push({name:p.name,price:p.price,image:p.image,qty:1});}
   updateCart();
 }
-
-let detailFromCat = "";
-window.goBackFromDetail = function(){ if(detailFromCat){openCategory(detailFromCat);}else{showPage("shop");} }
-window.openZoom = function(src){ document.getElementById("zoomOverlay").style.display="flex"; document.getElementById("zoomImg").src=src; document.body.style.overflow="hidden"; }
-window.closeZoom = function(){ document.getElementById("zoomOverlay").style.display="none"; document.body.style.overflow="auto"; }
+let detailFromCat="";
+window.goBackFromDetail=function(){if(detailFromCat){openCategory(detailFromCat);}else{showPage("shop");}}
+window.openZoom=function(src){document.getElementById("zoomOverlay").style.display="flex";document.getElementById("zoomImg").src=src;document.body.style.overflow="hidden";}
+window.closeZoom=function(){document.getElementById("zoomOverlay").style.display="none";document.body.style.overflow="auto";}
 
 function productCard(name,price,image){
   const qty=stockData[name]!==undefined?stockData[name]:2;
-  if(qty<=0){
-    return `<div class="card" onclick="openProductDetail('${name}')">
-      <span class="sold-out-badge">SOLD OUT</span>
-      <img src="${image}"><p>${name}</p><p>&#8377;${price}</p>
-      <button class="btn-sold" onclick="event.stopPropagation();openNotify('${name}')">Notify Me</button>
-    </div>`;
-  }
-  return `<div class="card" onclick="openProductDetail('${name}')">
-    ${qty===1?'<span class="stock-badge">Last 1!</span>':""}
-    <img src="${image}"><p>${name}</p><p>&#8377;${price}</p>
-    <button class="btn" onclick="event.stopPropagation();addToCart('${name}',${price},'${image}',this)">ADD</button>
-  </div>`;
+  if(qty<=0)return `<div class="card" onclick="openProductDetail('${name}')"><span class="sold-out-badge">SOLD OUT</span><img src="${image}"><p>${name}</p><p>&#8377;${price}</p><button class="btn-sold" onclick="event.stopPropagation();openNotify('${name}')">Notify Me</button></div>`;
+  return `<div class="card" onclick="openProductDetail('${name}')">${qty===1?'<span class="stock-badge">Last 1!</span>':""}<img src="${image}"><p>${name}</p><p>&#8377;${price}</p><button class="btn" onclick="event.stopPropagation();addToCart('${name}',${price},'${image}',this)">ADD</button></div>`;
 }
-
 function renderCategory(name){
-  detailFromCat = name;
+  detailFromCat=name;
   const products=ALL_PRODUCTS.filter(p=>p.cat===name);
-  let content=`<div style="display:flex;justify-content:space-between;align-items:center;padding:20px 40px;">
-    <button class="btn-ghost" onclick="showPage('shop')">&#8592; Back</button>
-    ${name==="Bangles"?`<button class="btn" onclick="openCustomize()">&#10024; Customize</button>`:""}
-  </div>
-  <h1 style="text-align:center;font-family:'Playfair Display';">${name}</h1>
-  <p style="text-align:center;color:#aaa;font-size:13px;margin-top:-10px;margin-bottom:10px;">Click any product to view details</p>
-  <div class="grid">`;
+  let content=`<div style="display:flex;justify-content:space-between;align-items:center;padding:20px 40px;"><button class="btn-ghost" onclick="showPage('shop')">&#8592; Back</button>${name==="Bangles"?`<button class="btn" onclick="openCustomize()">&#10024; Customize</button>`:""}</div><h1 style="text-align:center;font-family:'Playfair Display';">${name}</h1><p style="text-align:center;color:#aaa;font-size:13px;margin-top:-10px;margin-bottom:10px;">Click any product to view details</p><div class="grid">`;
   products.forEach(p=>{content+=productCard(p.name,p.price,p.image);});
   content+=`</div>`;
-  const el=document.getElementById("products");
-  el.innerHTML=content; el.setAttribute("data-cat",name);
+  const el=document.getElementById("products");el.innerHTML=content;el.setAttribute("data-cat",name);
 }
-window.openCategory = function(name){renderCategory(name);showPage("products");}
+window.openCategory=function(name){renderCategory(name);showPage("products");}
 
 // ── COUPON ──
-window.applyCoupon = function(){
-  const code = document.getElementById("couponInput").value.trim().toUpperCase();
-  const msgEl = document.getElementById("couponMsg");
-  if(!code){ msgEl.style.color="#e74c3c"; msgEl.innerText="Please enter a coupon code."; return; }
+window.applyCoupon=function(){
+  const code=document.getElementById("couponInput").value.trim().toUpperCase();
+  const msgEl=document.getElementById("couponMsg");
+  if(!code){msgEl.style.color="#e74c3c";msgEl.innerText="Please enter a coupon code.";return;}
   if(VALID_COUPONS[code]){
-    appliedCoupon = {...VALID_COUPONS[code], code};
-    msgEl.style.color="#1a7a3a";
-    msgEl.innerText="✓ Coupon applied! "+appliedCoupon.label+" discount added.";
+    appliedCoupon={...VALID_COUPONS[code],code};
+    msgEl.style.color="#1a7a3a";msgEl.innerText="✓ Coupon applied! "+appliedCoupon.label+" discount added.";
     document.getElementById("couponInput").disabled=true;
-    document.getElementById("applyBtn").disabled=true;
-    document.getElementById("applyBtn").innerText="Applied ✓";
+    document.getElementById("applyBtn").disabled=true;document.getElementById("applyBtn").innerText="Applied ✓";
     document.getElementById("removeCouponBtn").style.display="inline-block";
     refreshCartTotals();
-  } else {
-    appliedCoupon = null;
-    msgEl.style.color="#e74c3c";
-    msgEl.innerText="✗ Invalid coupon code. Please try again.";
-  }
+  }else{appliedCoupon=null;msgEl.style.color="#e74c3c";msgEl.innerText="✗ Invalid coupon code. Please try again.";}
 }
-
-window.removeCoupon = function(){
-  appliedCoupon = null;
-  document.getElementById("couponInput").value="";
-  document.getElementById("couponInput").disabled=false;
-  document.getElementById("applyBtn").disabled=false;
-  document.getElementById("applyBtn").innerText="Apply";
-  document.getElementById("couponMsg").innerText="";
-  document.getElementById("removeCouponBtn").style.display="none";
+window.removeCoupon=function(){
+  appliedCoupon=null;document.getElementById("couponInput").value="";document.getElementById("couponInput").disabled=false;
+  document.getElementById("applyBtn").disabled=false;document.getElementById("applyBtn").innerText="Apply";
+  document.getElementById("couponMsg").innerText="";document.getElementById("removeCouponBtn").style.display="none";
   refreshCartTotals();
 }
-
 function calcDiscount(subtotal){
-  if(!appliedCoupon) return 0;
-  if(appliedCoupon.type==="percent") return Math.round(subtotal * appliedCoupon.value / 100);
+  if(!appliedCoupon)return 0;
+  if(appliedCoupon.type==="percent")return Math.round(subtotal*appliedCoupon.value/100);
   return appliedCoupon.value;
 }
 
-function refreshCartTotals(){
-  const subtotal = cart.reduce((s,i)=>s+(i.price*i.qty),0);
-  const discount = calcDiscount(subtotal);
-  const discountedSubtotal = subtotal - discount;
-  const delivery = discountedSubtotal >= FREE_DELIVERY_ABOVE ? 0 : DELIVERY_CHARGE;
-  const grandTotal = discountedSubtotal + delivery;
-  const amountLeft = FREE_DELIVERY_ABOVE - discountedSubtotal;
+function getDeliveryLabel(charge){
+  if(charge===0)return "🎉 Free Delivery";
+  return "Delivery Charge";
+}
 
-  document.getElementById("cartTotalsSection").innerHTML = `
-    <div style="display:flex;justify-content:space-between;margin-bottom:8px;font-size:14px;color:#555;">
-      <span>Subtotal</span><span>&#8377;${subtotal}</span>
-    </div>
-    ${discount>0?`<div style="display:flex;justify-content:space-between;margin-bottom:8px;font-size:14px;color:#1a7a3a;">
-      <span>🎟️ Discount (${appliedCoupon.code})</span><span>-&#8377;${discount}</span>
-    </div>`:''}
-    <div style="display:flex;justify-content:space-between;margin-bottom:8px;font-size:14px;color:${delivery===0?'#1a7a3a':'#e67e22'};">
-      <span>${delivery===0?'🎉 Free Delivery':'Delivery Charge'}</span>
-      <span>${delivery===0?'FREE':'&#8377;'+delivery}</span>
-    </div>
-    ${delivery>0&&amountLeft>0?`<div style="background:#fff8e1;border:1px solid #f0e8d0;border-radius:8px;padding:8px 12px;margin-bottom:12px;font-size:12px;color:#b8860b;">
-      🛍️ Add &#8377;${amountLeft} more for FREE delivery!
-    </div>`:''}
-    <div style="display:flex;justify-content:space-between;margin-bottom:16px;font-size:17px;font-weight:600;border-top:1px solid #f0e8d0;padding-top:10px;">
-      <span>Total</span><span style="color:#D4AF37;">&#8377;${grandTotal}</span>
-    </div>
+function refreshCartTotals(){
+  const subtotal=cart.reduce((s,i)=>s+(i.price*i.qty),0);
+  const discount=calcDiscount(subtotal);
+  const discountedSubtotal=subtotal-discount;
+  const city=window._lastCity||"";const pincode=window._lastPincode||"";
+  const delivery=discountedSubtotal>=FREE_DELIVERY_ABOVE?0:getDeliveryCharge(city,pincode);
+  const grandTotal=discountedSubtotal+delivery;
+  const amountLeft=FREE_DELIVERY_ABOVE-discountedSubtotal;
+  document.getElementById("cartTotalsSection").innerHTML=buildTotalsHTML(subtotal,discount,delivery,grandTotal,amountLeft);
+}
+
+function buildTotalsHTML(subtotal,discount,delivery,grandTotal,amountLeft){
+  return `
+    <div style="display:flex;justify-content:space-between;margin-bottom:8px;font-size:14px;color:#555;"><span>Subtotal</span><span>&#8377;${subtotal}</span></div>
+    ${discount>0?`<div style="display:flex;justify-content:space-between;margin-bottom:8px;font-size:14px;color:#1a7a3a;"><span>🎟️ Discount (${appliedCoupon.code})</span><span>-&#8377;${discount}</span></div>`:''}
+    <div style="display:flex;justify-content:space-between;margin-bottom:8px;font-size:14px;color:${delivery===0?'#1a7a3a':'#e67e22'};"><span>${getDeliveryLabel(delivery)}</span><span>${delivery===0?'FREE':'&#8377;'+delivery}</span></div>
+    ${delivery>0&&amountLeft>0?`<div style="background:#fff8e1;border:1px solid #f0e8d0;border-radius:8px;padding:8px 12px;margin-bottom:12px;font-size:12px;color:#b8860b;">🛍️ Add &#8377;${amountLeft} more for FREE delivery!</div>`:''}
+    <div style="display:flex;justify-content:space-between;margin-bottom:16px;font-size:17px;font-weight:600;border-top:1px solid #f0e8d0;padding-top:10px;"><span>Total</span><span style="color:#D4AF37;">&#8377;${grandTotal}</span></div>
     <button class="btn-primary" onclick="goToCheckout(${grandTotal},${delivery},${discount})" style="width:100%;">Proceed to Checkout &#10145;</button>`;
 }
 
-window.showCart = function(){
-  let html=""; let subtotal=0;
+window.showCart=function(){
+  let html="";let subtotal=0;
   cart.forEach((i,idx)=>{
     subtotal+=i.price*i.qty;
-    html+=`<div class="cart-item">
-      <img src="${i.image}" width="60" style="border-radius:6px;flex-shrink:0;">
-      <p style="flex:1;text-align:left;margin:0 10px;font-size:14px;">${i.name}</p>
-      <div class="qty-ctrl">
-        <button onclick="decreaseQty(${idx})">&#10134;</button>
-        <span style="min-width:24px;text-align:center;">${i.qty}</span>
-        <button onclick="increaseQty(${idx})">&#10133;</button>
-      </div>
-      <p style="min-width:70px;font-weight:500;">&#8377;${i.price*i.qty}</p>
-    </div>`;
+    html+=`<div class="cart-item"><img src="${i.image}" width="60" style="border-radius:6px;flex-shrink:0;"><p style="flex:1;text-align:left;margin:0 10px;font-size:14px;">${i.name}</p><div class="qty-ctrl"><button onclick="decreaseQty(${idx})">&#10134;</button><span style="min-width:24px;text-align:center;">${i.qty}</span><button onclick="increaseQty(${idx})">&#10133;</button></div><p style="min-width:70px;font-weight:500;">&#8377;${i.price*i.qty}</p></div>`;
   });
-
   if(cart.length===0){
     html=`<div style="padding:40px;color:#aaa;text-align:center;"><div style="font-size:40px;">&#128722;</div>Your cart is empty.<br><button class="btn" onclick="showPage('shop')" style="margin-top:16px;">Shop Now</button></div>`;
-  } else {
-    const discount = calcDiscount(subtotal);
-    const discountedSubtotal = subtotal - discount;
-    const delivery = discountedSubtotal >= FREE_DELIVERY_ABOVE ? 0 : DELIVERY_CHARGE;
-    const grandTotal = discountedSubtotal + delivery;
-    const amountLeft = FREE_DELIVERY_ABOVE - discountedSubtotal;
-
-    html += `<div style="border-top:1px solid #f0e8d0;margin-top:10px;padding-top:16px;">
-      <!-- COUPON BOX -->
+  }else{
+    const discount=calcDiscount(subtotal);
+    const discountedSubtotal=subtotal-discount;
+    const delivery=discountedSubtotal>=FREE_DELIVERY_ABOVE?0:80;
+    const grandTotal=discountedSubtotal+delivery;
+    const amountLeft=FREE_DELIVERY_ABOVE-discountedSubtotal;
+    html+=`<div style="border-top:1px solid #f0e8d0;margin-top:10px;padding-top:16px;">
+      <div style="background:#fffdf5;border:1px solid #f0e8d0;border-radius:10px;padding:14px;margin-bottom:16px;font-size:13px;color:#555;">
+        <div style="display:flex;align-items:center;gap:8px;"><span style="font-size:18px;">&#128666;</span><span>Free delivery on orders above &#8377;999</span></div>
+      </div>
       <div style="background:#fffdf5;border:1px solid #f0e8d0;border-radius:10px;padding:14px;margin-bottom:16px;">
         <div style="font-size:13px;font-weight:500;color:#555;margin-bottom:8px;">🎟️ Have a coupon code?</div>
         <div style="display:flex;gap:8px;">
-          <input id="couponInput" placeholder="Enter code e.g. WELCOME10" ${appliedCoupon?'disabled':''} value="${appliedCoupon?appliedCoupon.code:''}"
-            style="flex:1;padding:10px 12px;border:1.5px solid #ddd;border-radius:8px;font-family:Poppins;font-size:13px;"
-            onkeydown="if(event.key==='Enter')applyCoupon()">
+          <input id="couponInput" placeholder="Enter code e.g. WELCOME10" ${appliedCoupon?'disabled':''} value="${appliedCoupon?appliedCoupon.code:''}" style="flex:1;padding:10px 12px;border:1.5px solid #ddd;border-radius:8px;font-family:Poppins;font-size:13px;" onkeydown="if(event.key==='Enter')applyCoupon()">
           <button id="applyBtn" onclick="applyCoupon()" ${appliedCoupon?'disabled':''} style="padding:10px 16px;background:#D4AF37;color:#fff;border:none;border-radius:8px;font-family:Poppins;font-size:13px;cursor:pointer;white-space:nowrap;">${appliedCoupon?'Applied ✓':'Apply'}</button>
           <button id="removeCouponBtn" onclick="removeCoupon()" style="display:${appliedCoupon?'inline-block':'none'};padding:10px 12px;background:none;border:1px solid #e74c3c;color:#e74c3c;border-radius:8px;font-family:Poppins;font-size:12px;cursor:pointer;">Remove</button>
         </div>
         <div id="couponMsg" style="font-size:12px;margin-top:6px;color:${appliedCoupon?'#1a7a3a':'#e74c3c'};">${appliedCoupon?'✓ Coupon applied! '+appliedCoupon.label+' discount added.':''}</div>
       </div>
-      <!-- TOTALS -->
-      <div id="cartTotalsSection">
-        <div style="display:flex;justify-content:space-between;margin-bottom:8px;font-size:14px;color:#555;">
-          <span>Subtotal</span><span>&#8377;${subtotal}</span>
-        </div>
-        ${discount>0?`<div style="display:flex;justify-content:space-between;margin-bottom:8px;font-size:14px;color:#1a7a3a;">
-          <span>🎟️ Discount (${appliedCoupon.code})</span><span>-&#8377;${discount}</span>
-        </div>`:''}
-        <div style="display:flex;justify-content:space-between;margin-bottom:8px;font-size:14px;color:${delivery===0?'#1a7a3a':'#e67e22'};">
-          <span>${delivery===0?'🎉 Free Delivery':'Delivery Charge'}</span>
-          <span>${delivery===0?'FREE':'&#8377;'+delivery}</span>
-        </div>
-        ${delivery>0&&amountLeft>0?`<div style="background:#fff8e1;border:1px solid #f0e8d0;border-radius:8px;padding:8px 12px;margin-bottom:12px;font-size:12px;color:#b8860b;">
-          🛍️ Add &#8377;${amountLeft} more for FREE delivery!
-        </div>`:''}
-        <div style="display:flex;justify-content:space-between;margin-bottom:16px;font-size:17px;font-weight:600;border-top:1px solid #f0e8d0;padding-top:10px;">
-          <span>Total</span><span style="color:#D4AF37;">&#8377;${grandTotal}</span>
-        </div>
-        <button class="btn-primary" onclick="goToCheckout(${grandTotal},${delivery},${discount})" style="width:100%;">Proceed to Checkout &#10145;</button>
-      </div>
+      <div id="cartTotalsSection">${buildTotalsHTML(subtotal,discount,delivery,grandTotal,amountLeft)}</div>
     </div>`;
   }
   document.getElementById("cartItems").innerHTML=html;
   showPage("cartPage");
 }
+window.increaseQty=function(i){const item=cart[i];const maxStock=stockData[item.name]!==undefined?stockData[item.name]:2;if(item.qty>=maxStock){alert("Only "+maxStock+" piece(s) available.");return;}cart[i].qty++;showCart();updateCart();}
+window.decreaseQty=function(i){if(cart[i].qty>1){cart[i].qty--;}else{cart.splice(i,1);}showCart();updateCart();}
 
-window.increaseQty = function(i){
-  const item=cart[i]; const maxStock=stockData[item.name]!==undefined?stockData[item.name]:2;
-  if(item.qty>=maxStock){alert("Only "+maxStock+" piece(s) available.");return;}
-  cart[i].qty++;showCart();updateCart();
-}
-window.decreaseQty = function(i){if(cart[i].qty>1){cart[i].qty--;}else{cart.splice(i,1);}showCart();updateCart();}
-
-window.goToCheckout = async function(grandTotal, delivery, discount){
+window.goToCheckout=async function(grandTotal,delivery,discount){
   showPage("checkout");
-  window._checkoutTotal = grandTotal;
-  window._checkoutDelivery = delivery;
-  window._checkoutDiscount = discount || 0;
+  window._checkoutTotal=grandTotal;window._checkoutDelivery=delivery;window._checkoutDiscount=discount||0;
   if(currentUser){
     const uSnap=await getDoc(doc(db,"users",currentUser.uid));
     const u=uSnap.data()||{};const a=u.address||{};
@@ -523,19 +373,34 @@ window.goToCheckout = async function(grandTotal, delivery, discount){
       const sv=(id,v)=>{const el=document.getElementById(id);if(el)el.value=v||"";};
       sv("co-name",a.fullname||u.name||"");sv("co-phone",a.phone||"");
       sv("co-address",a.address||"");sv("co-city",a.city||"");sv("co-pincode",a.pincode||"");
+      if(a.city||a.pincode) updateDeliveryPreview();
     },100);
   }
-  const subtotal = grandTotal - delivery + (discount||0);
-  document.getElementById("checkoutSummary").innerHTML = `
+  updateDeliveryPreview();
+}
+
+window.updateDeliveryPreview=function(){
+  const city=document.getElementById("co-city")?document.getElementById("co-city").value:"";
+  const pincode=document.getElementById("co-pincode")?document.getElementById("co-pincode").value:"";
+  window._lastCity=city;window._lastPincode=pincode;
+  const subtotal=cart.reduce((s,i)=>s+(i.price*i.qty),0);
+  const discount=window._checkoutDiscount||0;
+  const discountedSubtotal=subtotal-discount;
+  const delivery=discountedSubtotal>=FREE_DELIVERY_ABOVE?0:getDeliveryCharge(city,pincode);
+  const grandTotal=discountedSubtotal+delivery;
+  window._checkoutTotal=grandTotal;window._checkoutDelivery=delivery;
+  const subtotalOrig=subtotal;
+  document.getElementById("checkoutSummary").innerHTML=`
     <div style="background:#fffdf5;border:1px solid #f0e8d0;border-radius:10px;padding:14px;margin-bottom:16px;font-size:14px;">
-      <div style="display:flex;justify-content:space-between;margin-bottom:6px;color:#555;"><span>Subtotal</span><span>&#8377;${subtotal}</span></div>
+      <div style="display:flex;justify-content:space-between;margin-bottom:6px;color:#555;"><span>Subtotal</span><span>&#8377;${subtotalOrig}</span></div>
       ${discount>0?`<div style="display:flex;justify-content:space-between;margin-bottom:6px;color:#1a7a3a;"><span>🎟️ Coupon Discount</span><span>-&#8377;${discount}</span></div>`:''}
-      <div style="display:flex;justify-content:space-between;margin-bottom:6px;color:${delivery===0?'#1a7a3a':'#e67e22'};"><span>${delivery===0?'🎉 Free Delivery':'Delivery'}</span><span>${delivery===0?'FREE':'&#8377;'+delivery}</span></div>
+      <div style="display:flex;justify-content:space-between;margin-bottom:6px;color:${delivery===0?'#1a7a3a':'#e67e22'};"><span>${getDeliveryLabel(delivery)}</span><span>${delivery===0?'FREE':'&#8377;'+delivery}</span></div>
+      ${!city?'<div style="font-size:11px;color:#aaa;margin-top:4px;">Enter city below to calculate delivery charge</div>':''}
       <div style="display:flex;justify-content:space-between;font-weight:600;font-size:16px;border-top:1px solid #f0e8d0;padding-top:8px;margin-top:6px;"><span>Total</span><span style="color:#D4AF37;">&#8377;${grandTotal}</span></div>
     </div>`;
 }
 
-window.proceedToPayment = async function(){
+window.proceedToPayment=async function(){
   const name=document.getElementById("co-name").value.trim();
   const phone=document.getElementById("co-phone").value.trim();
   const address=document.getElementById("co-address").value.trim();
@@ -543,143 +408,60 @@ window.proceedToPayment = async function(){
   const pincode=document.getElementById("co-pincode").value.trim();
   if(!name||!phone||!address||!city||!pincode){alert("Please fill all details");return;}
   if(phone.length<10){alert("Please enter a valid 10-digit phone number");return;}
-
-  const total = window._checkoutTotal || cart.reduce((s,i)=>s+(i.price*i.qty),0);
-  const delivery = window._checkoutDelivery || 0;
-  const discount = window._checkoutDiscount || 0;
+  const subtotal=cart.reduce((s,i)=>s+(i.price*i.qty),0);
+  const discount=window._checkoutDiscount||0;
+  const discountedSubtotal=subtotal-discount;
+  const delivery=discountedSubtotal>=FREE_DELIVERY_ABOVE?0:getDeliveryCharge(city,pincode);
+  const total=discountedSubtotal+delivery;
   currentOrderDetails={name,phone,address,city,pincode,total,delivery,discount};
-
-  const btn=document.getElementById("payBtn");
-  btn.disabled=true; btn.innerText="Opening Payment...";
-
-  try {
-    const res=await fetch(CREATE_ORDER_URL,{
-      method:"POST",
-      headers:{"Content-Type":"application/json"},
-      body:JSON.stringify({amount:total})
-    });
+  const btn=document.getElementById("payBtn");btn.disabled=true;btn.innerText="Opening Payment...";
+  try{
+    const res=await fetch(CREATE_ORDER_URL,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({amount:total})});
     const order=await res.json();
     if(!order.orderId){throw new Error("Could not create order");}
-
     const options={
-      key: RAZORPAY_KEY_ID,
-      amount: order.amount,
-      currency: "INR",
-      order_id: order.orderId,
-      name: "AH Collections",
-      description: "Jewellery Order",
-      image: "logo1.png",
-      prefill:{ name, contact: phone, email: currentUser ? currentUser.email : "" },
-      theme:{ color: "#D4AF37" },
-      modal:{ ondismiss: function(){ btn.disabled=false; btn.innerText="Pay Now ➡"; } },
-      handler: async function(response){
-        try {
-          const verifyRes=await fetch(VERIFY_PAYMENT_URL,{
-            method:"POST",
-            headers:{"Content-Type":"application/json"},
-            body:JSON.stringify({
-              razorpay_order_id: response.razorpay_order_id,
-              razorpay_payment_id: response.razorpay_payment_id,
-              razorpay_signature: response.razorpay_signature
-            })
-          });
+      key:RAZORPAY_KEY_ID,amount:order.amount,currency:"INR",order_id:order.orderId,
+      name:"AH Collections",description:"Jewellery Order",image:"logo1.png",
+      prefill:{name,contact:phone,email:currentUser?currentUser.email:""},
+      theme:{color:"#D4AF37"},
+      modal:{ondismiss:function(){btn.disabled=false;btn.innerText="Pay Now ➡";}},
+      handler:async function(response){
+        try{
+          const verifyRes=await fetch(VERIFY_PAYMENT_URL,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({razorpay_order_id:response.razorpay_order_id,razorpay_payment_id:response.razorpay_payment_id,razorpay_signature:response.razorpay_signature})});
           const verifyData=await verifyRes.json();
-          if(verifyData.verified){ await onPaymentSuccess(response.razorpay_payment_id, response.razorpay_order_id); }
-          else { alert("Payment verification failed. Please contact us with your payment ID: "+response.razorpay_payment_id); }
-        } catch(e){ await onPaymentSuccess(response.razorpay_payment_id, response.razorpay_order_id); }
+          if(verifyData.verified){await onPaymentSuccess(response.razorpay_payment_id,response.razorpay_order_id);}
+          else{alert("Payment verification failed. Please contact us with your payment ID: "+response.razorpay_payment_id);}
+        }catch(e){await onPaymentSuccess(response.razorpay_payment_id,response.razorpay_order_id);}
       }
     };
-    const rzp=new Razorpay(options); rzp.open();
-  } catch(e){
-    alert("Could not open payment. Please try again.\nError: "+e.message);
-    btn.disabled=false; btn.innerText="Pay Now ➡";
-  }
+    const rzp=new Razorpay(options);rzp.open();
+  }catch(e){alert("Could not open payment. Please try again.\nError: "+e.message);btn.disabled=false;btn.innerText="Pay Now ➡";}
 }
 
-async function onPaymentSuccess(paymentId, razorpayOrderId){
+async function onPaymentSuccess(paymentId,razorpayOrderId){
   let orderItemsText="";
   cart.forEach(i=>{orderItemsText+=i.name+" x "+i.qty+" = Rs."+i.price*i.qty+"\n";});
-  const delivery = currentOrderDetails.delivery || 0;
-  const discount = currentOrderDetails.discount || 0;
-  if(discount>0) orderItemsText += "Coupon Discount = -Rs."+discount+"\n";
-  if(delivery>0) orderItemsText += "Delivery Charge = Rs."+delivery+"\n";
-
-  for(const i of cart){
-    const ref=doc(db,"stock",i.name);
-    const snap=await getDoc(ref);
-    if(snap.exists()){await updateDoc(ref,{qty:Math.max(0,snap.data().qty-i.qty)});}
-  }
-
+  const delivery=currentOrderDetails.delivery||0;
+  const discount=currentOrderDetails.discount||0;
+  if(discount>0)orderItemsText+="Coupon Discount = -Rs."+discount+"\n";
+  if(delivery>0)orderItemsText+="Delivery = Rs."+delivery+"\n";
+  for(const i of cart){const ref=doc(db,"stock",i.name);const snap=await getDoc(ref);if(snap.exists()){await updateDoc(ref,{qty:Math.max(0,snap.data().qty-i.qty)});}}
   const orderId="AH"+Date.now().toString().slice(-6);
   const now=new Date().toLocaleDateString("en-IN",{day:"2-digit",month:"short",year:"numeric"});
   if(currentUser){
-    await addDoc(collection(db,"orders"),{
-      uid:currentUser.uid, orderId, date:now,
-      name:currentOrderDetails.name, phone:currentOrderDetails.phone,
-      address:currentOrderDetails.address+", "+currentOrderDetails.city+" - "+currentOrderDetails.pincode,
-      items:orderItemsText, total:currentOrderDetails.total,
-      delivery, discount,
-      coupon: appliedCoupon ? appliedCoupon.code : "",
-      paymentId, razorpayOrderId, createdAt:serverTimestamp()
-    });
+    await addDoc(collection(db,"orders"),{uid:currentUser.uid,orderId,date:now,name:currentOrderDetails.name,phone:currentOrderDetails.phone,address:currentOrderDetails.address+", "+currentOrderDetails.city+" - "+currentOrderDetails.pincode,items:orderItemsText,total:currentOrderDetails.total,delivery,discount,coupon:appliedCoupon?appliedCoupon.code:"",paymentId,razorpayOrderId,createdAt:serverTimestamp()});
   }
-
-  emailjs.send("service_123456","template_xgijxrk",{
-    customer_name:currentOrderDetails.name, name:currentOrderDetails.name,
-    phone:currentOrderDetails.phone,
-    address:currentOrderDetails.address+", "+currentOrderDetails.city+" - "+currentOrderDetails.pincode,
-    order_items:orderItemsText, total:"Rs."+currentOrderDetails.total,
-    txn_id:paymentId, email:"ahcollections355@gmail.com"
-  }).then(()=>console.log("Email sent")).catch(e=>console.error(e));
-
-  const orderLines=orderItemsText.split("\n").filter(l=>l.trim()).map(l=>{
-    const parts=l.split("=");
-    const isDiscount = parts[0].includes("Discount");
-    return '<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #f0e8d0;font-size:13px;"><span>'+parts[0]+'</span><span style="font-weight:500;color:'+(isDiscount?'#1a7a3a':'#D4AF37')+'">'+(parts[1]||'')+'</span></div>';
-  }).join("");
-
-  const savedName=currentOrderDetails.name;
-  const savedTotal=currentOrderDetails.total;
-  const savedPhone=currentOrderDetails.phone;
+  emailjs.send("service_123456","template_xgijxrk",{customer_name:currentOrderDetails.name,name:currentOrderDetails.name,phone:currentOrderDetails.phone,address:currentOrderDetails.address+", "+currentOrderDetails.city+" - "+currentOrderDetails.pincode,order_items:orderItemsText,total:"Rs."+currentOrderDetails.total,txn_id:paymentId,email:"ahcollections355@gmail.com"}).then(()=>console.log("Email sent")).catch(e=>console.error(e));
+  const orderLines=orderItemsText.split("\n").filter(l=>l.trim()).map(l=>{const parts=l.split("=");const isDiscount=parts[0].includes("Discount");return '<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #f0e8d0;font-size:13px;"><span>'+parts[0]+'</span><span style="font-weight:500;color:'+(isDiscount?'#1a7a3a':'#D4AF37')+'">'+(parts[1]||'')+'</span></div>';}).join("");
+  const savedName=currentOrderDetails.name,savedTotal=currentOrderDetails.total,savedPhone=currentOrderDetails.phone;
   const savedAddress=currentOrderDetails.address+', '+currentOrderDetails.city+' - '+currentOrderDetails.pincode;
-  cart=[]; appliedCoupon=null; updateCart();
-
-  document.getElementById("successMsg").innerHTML=
-    '<div style="max-width:480px;margin:0 auto;">'+
-    '<div style="text-align:center;margin-bottom:24px;">'+
-    '<div style="width:80px;height:80px;background:linear-gradient(135deg,#D4AF37,#f0c830);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;font-size:36px;">&#10003;</div>'+
-    '<h2 style="font-family:Playfair Display;color:#D4AF37;margin:0 0 6px;font-size:28px;">Order Confirmed!</h2>'+
-    '<p style="color:#888;font-size:14px;margin:0;">Thank you for shopping with AH Collections</p>'+
-    '</div>'+
-    '<div style="background:#fff;border:1px solid #f0e8d0;border-radius:16px;overflow:hidden;margin-bottom:16px;">'+
-    '<div style="background:linear-gradient(135deg,#fffdf5,#fff8e1);padding:16px 20px;border-bottom:1px solid #f0e8d0;display:flex;justify-content:space-between;align-items:center;">'+
-    '<span style="font-size:12px;color:#aaa;text-transform:uppercase;letter-spacing:1px;">Order Summary</span>'+
-    '<span style="font-size:12px;background:#e8f9ee;color:#1a7a3a;padding:3px 10px;border-radius:20px;">&#10003; Payment Successful</span>'+
-    '</div>'+
-    '<div style="padding:16px 20px;">'+orderLines+
-    '<div style="display:flex;justify-content:space-between;padding:12px 0 4px;font-size:16px;font-weight:600;"><span>Total Paid</span><span style="color:#D4AF37;">Rs.'+savedTotal+'</span></div>'+
-    '</div></div>'+
-    '<div style="background:#fff;border:1px solid #f0e8d0;border-radius:16px;padding:16px 20px;margin-bottom:16px;">'+
-    '<div style="font-size:12px;color:#aaa;text-transform:uppercase;letter-spacing:1px;margin-bottom:12px;">Delivery Details</div>'+
-    '<div style="display:flex;align-items:flex-start;gap:10px;margin-bottom:10px;"><span style="font-size:18px;">&#128100;</span><div><div style="font-size:14px;font-weight:500;">'+savedName+'</div><div style="font-size:13px;color:#888;">'+savedPhone+'</div></div></div>'+
-    '<div style="display:flex;align-items:flex-start;gap:10px;margin-bottom:10px;"><span style="font-size:18px;">&#128205;</span><div style="font-size:13px;color:#666;line-height:1.5;">'+savedAddress+'</div></div>'+
-    '<div style="display:flex;align-items:center;gap:10px;"><span style="font-size:18px;">&#128179;</span><div><div style="font-size:11px;color:#aaa;">Razorpay Payment ID</div><div style="font-size:13px;font-weight:500;color:#555;font-family:monospace;">'+paymentId+'</div></div></div>'+
-    '</div>'+
-    '<div style="background:#fffdf5;border:1px solid #f0e8d0;border-radius:16px;padding:16px 20px;margin-bottom:24px;">'+
-    '<div style="font-size:12px;color:#aaa;text-transform:uppercase;letter-spacing:1px;margin-bottom:12px;">What happens next?</div>'+
-    '<div style="display:flex;align-items:flex-start;gap:10px;margin-bottom:10px;"><span style="width:24px;height:24px;background:#D4AF37;color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;flex-shrink:0;">1</span><span style="font-size:13px;color:#555;">We verify your payment and prepare your order</span></div>'+
-    '<div style="display:flex;align-items:flex-start;gap:10px;margin-bottom:10px;"><span style="width:24px;height:24px;background:#D4AF37;color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;flex-shrink:0;">2</span><span style="font-size:13px;color:#555;">Your order is packed and shipped within 3-4 days</span></div>'+
-    '<div style="display:flex;align-items:flex-start;gap:10px;"><span style="width:24px;height:24px;background:#D4AF37;color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;flex-shrink:0;">3</span><span style="font-size:13px;color:#555;">We contact you on WhatsApp with tracking details</span></div>'+
-    '</div>'+
-    '<div style="display:flex;gap:12px;flex-wrap:wrap;">'+
-    (currentUser?'<button class="btn" onclick="showPage(\'profilePage\')" style="flex:1;min-width:140px;">&#128722; Order History</button>':'')+
-    '<button class="btn-primary" onclick="showPage(\'home\')" style="flex:1;min-width:140px;">Continue Shopping</button>'+
-    '</div></div>';
+  cart=[];appliedCoupon=null;updateCart();
+  document.getElementById("successMsg").innerHTML='<div style="max-width:480px;margin:0 auto;"><div style="text-align:center;margin-bottom:24px;"><div style="width:80px;height:80px;background:linear-gradient(135deg,#D4AF37,#f0c830);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;font-size:36px;">&#10003;</div><h2 style="font-family:Playfair Display;color:#D4AF37;margin:0 0 6px;font-size:28px;">Order Confirmed!</h2><p style="color:#888;font-size:14px;margin:0;">Thank you for shopping with AH Collections</p></div><div style="background:#fff;border:1px solid #f0e8d0;border-radius:16px;overflow:hidden;margin-bottom:16px;"><div style="background:linear-gradient(135deg,#fffdf5,#fff8e1);padding:16px 20px;border-bottom:1px solid #f0e8d0;display:flex;justify-content:space-between;align-items:center;"><span style="font-size:12px;color:#aaa;text-transform:uppercase;letter-spacing:1px;">Order Summary</span><span style="font-size:12px;background:#e8f9ee;color:#1a7a3a;padding:3px 10px;border-radius:20px;">&#10003; Payment Successful</span></div><div style="padding:16px 20px;">'+orderLines+'<div style="display:flex;justify-content:space-between;padding:12px 0 4px;font-size:16px;font-weight:600;"><span>Total Paid</span><span style="color:#D4AF37;">Rs.'+savedTotal+'</span></div></div></div><div style="background:#fff;border:1px solid #f0e8d0;border-radius:16px;padding:16px 20px;margin-bottom:16px;"><div style="font-size:12px;color:#aaa;text-transform:uppercase;letter-spacing:1px;margin-bottom:12px;">Delivery Details</div><div style="display:flex;align-items:flex-start;gap:10px;margin-bottom:10px;"><span style="font-size:18px;">&#128100;</span><div><div style="font-size:14px;font-weight:500;">'+savedName+'</div><div style="font-size:13px;color:#888;">'+savedPhone+'</div></div></div><div style="display:flex;align-items:flex-start;gap:10px;margin-bottom:10px;"><span style="font-size:18px;">&#128205;</span><div style="font-size:13px;color:#666;line-height:1.5;">'+savedAddress+'</div></div><div style="display:flex;align-items:center;gap:10px;"><span style="font-size:18px;">&#128179;</span><div><div style="font-size:11px;color:#aaa;">Razorpay Payment ID</div><div style="font-size:13px;font-weight:500;color:#555;font-family:monospace;">'+paymentId+'</div></div></div></div><div style="background:#fffdf5;border:1px solid #f0e8d0;border-radius:16px;padding:16px 20px;margin-bottom:24px;"><div style="font-size:12px;color:#aaa;text-transform:uppercase;letter-spacing:1px;margin-bottom:12px;">What happens next?</div><div style="display:flex;align-items:flex-start;gap:10px;margin-bottom:10px;"><span style="width:24px;height:24px;background:#D4AF37;color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;flex-shrink:0;">1</span><span style="font-size:13px;color:#555;">We verify your payment and prepare your order</span></div><div style="display:flex;align-items:flex-start;gap:10px;margin-bottom:10px;"><span style="width:24px;height:24px;background:#D4AF37;color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;flex-shrink:0;">2</span><span style="font-size:13px;color:#555;">Your order is packed and shipped within 3-4 days</span></div><div style="display:flex;align-items:flex-start;gap:10px;"><span style="width:24px;height:24px;background:#D4AF37;color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;flex-shrink:0;">3</span><span style="font-size:13px;color:#555;">We contact you on WhatsApp with tracking details</span></div></div><div style="display:flex;gap:12px;flex-wrap:wrap;">'+(currentUser?'<button class="btn" onclick="showPage(\'profilePage\')" style="flex:1;min-width:140px;">&#128722; Order History</button>':'')+'<button class="btn-primary" onclick="showPage(\'home\')" style="flex:1;min-width:140px;">Continue Shopping</button></div></div>';
   showPage("successPage");
 }
 
-window.openCustomize = function(){document.getElementById("customizePopup").style.display="flex";document.body.style.overflow="hidden";}
-window.closeCustomize = function(){document.getElementById("customizePopup").style.display="none";document.body.style.overflow="auto";resetForm();}
+window.openCustomize=function(){document.getElementById("customizePopup").style.display="flex";document.body.style.overflow="hidden";}
+window.closeCustomize=function(){document.getElementById("customizePopup").style.display="none";document.body.style.overflow="auto";resetForm();}
 function resetForm(){
   ["cName","cPhone","cSpecs","cImageUrl"].forEach(id=>{const el=document.getElementById(id);if(el)el.value="";});
   document.getElementById("statusMsg").className="status-msg";document.getElementById("statusMsg").innerText="";
@@ -688,8 +470,8 @@ function resetForm(){
   document.getElementById("uploadPreview").style.display="none";
   const btn=document.getElementById("submitBtn");btn.disabled=false;btn.innerText="Submit Request";
 }
-window.selectColour = function(el,colour){document.querySelectorAll(".colour-chip").forEach(c=>c.classList.remove("selected"));el.classList.add("selected");selectedColour=colour;}
-window.handleFileUpload = function(input){
+window.selectColour=function(el,colour){document.querySelectorAll(".colour-chip").forEach(c=>c.classList.remove("selected"));el.classList.add("selected");selectedColour=colour;}
+window.handleFileUpload=function(input){
   const file=input.files[0];if(!file)return;
   if(file.size>5*1024*1024){alert("Image must be under 5MB");return;}
   uploadedFileName=file.name;
@@ -697,7 +479,7 @@ window.handleFileUpload = function(input){
   reader.onload=e=>{uploadedFileBase64=e.target.result;const p=document.getElementById("uploadPreview");p.style.display="flex";p.innerHTML='<img src="'+e.target.result+'"><span>'+file.name+"</span>";};
   reader.readAsDataURL(file);
 }
-window.sendCustomize = function(){
+window.sendCustomize=function(){
   const name=document.getElementById("cName").value.trim(),phone=document.getElementById("cPhone").value.trim();
   const specs=document.getElementById("cSpecs").value.trim(),imageUrl=document.getElementById("cImageUrl").value.trim();
   if(!name||!phone){alert("Please fill Name and Phone");return;}
@@ -708,70 +490,38 @@ window.sendCustomize = function(){
   .then(()=>{const m=document.getElementById("statusMsg");m.className="status-msg success";m.innerText="Request sent! We'll contact you soon.";btn.innerText="Sent ✓";setTimeout(()=>closeCustomize(),2500);})
   .catch(err=>{const m=document.getElementById("statusMsg");m.className="status-msg error";m.innerText="Failed: "+(err.text||err.message||JSON.stringify(err));btn.disabled=false;btn.innerText="Submit Request";});
 }
-
-window.openNotify = function(n){
-  currentNotifyProduct=n;
-  document.getElementById("notifyProduct").innerText=n;
-  document.getElementById("notifyName").value="";document.getElementById("notifyPhone").value="";
-  document.getElementById("notifySuccessMsg").style.display="none";
-  document.getElementById("notifyOverlay").style.display="flex";document.body.style.overflow="hidden";
-}
-window.closeNotify = function(){document.getElementById("notifyOverlay").style.display="none";document.body.style.overflow="auto";}
-window.submitNotify = function(){
+window.openNotify=function(n){currentNotifyProduct=n;document.getElementById("notifyProduct").innerText=n;document.getElementById("notifyName").value="";document.getElementById("notifyPhone").value="";document.getElementById("notifySuccessMsg").style.display="none";document.getElementById("notifyOverlay").style.display="flex";document.body.style.overflow="hidden";}
+window.closeNotify=function(){document.getElementById("notifyOverlay").style.display="none";document.body.style.overflow="auto";}
+window.submitNotify=function(){
   const name=document.getElementById("notifyName").value.trim(),phone=document.getElementById("notifyPhone").value.trim();
   if(!name||!phone){alert("Please fill name and phone");return;}
   emailjs.send("service_123456","template_8f7s1ep",{customer_name:name,name,phone,title:"Restock Alert",message:"RESTOCK ALERT\nProduct: "+currentNotifyProduct+"\nName: "+name+"\nPhone: "+phone,email:"ahcollections355@gmail.com"}).catch(e=>console.error(e));
-  document.getElementById("notifySuccessMsg").style.display="block";
-  setTimeout(()=>closeNotify(),2000);
+  document.getElementById("notifySuccessMsg").style.display="block";setTimeout(()=>closeNotify(),2000);
 }
-
 const ADMIN_PASSWORD="ah2024";
-window.checkAdminPassword = function(){
-  if(document.getElementById("adminPwInput").value===ADMIN_PASSWORD){showPage("adminPanel");}
-  else{alert("Wrong password.");}
-}
-window.renderAdminPanel = function(){
+window.checkAdminPassword=function(){if(document.getElementById("adminPwInput").value===ADMIN_PASSWORD){showPage("adminPanel");}else{alert("Wrong password.");}}
+window.renderAdminPanel=function(){
   let html="";
-  ALL_PRODUCTS.forEach(p=>{
-    const qty=stockData[p.name]!==undefined?stockData[p.name]:"—";
-    let sc="ok",st=qty+" remaining";
-    if(qty===0){sc="sold";st="Sold Out";}else if(qty===1){sc="low";st="Last 1 Left";}
-    html+=`<div class="stock-row"><span class="sname">${p.name}</span><span class="sinfo ${sc}">${st}</span><button class="restock-btn" onclick="restockItem('${p.name}')">&#8635; Restock to 2</button></div>`;
-  });
+  ALL_PRODUCTS.forEach(p=>{const qty=stockData[p.name]!==undefined?stockData[p.name]:"—";let sc="ok",st=qty+" remaining";if(qty===0){sc="sold";st="Sold Out";}else if(qty===1){sc="low";st="Last 1 Left";}html+=`<div class="stock-row"><span class="sname">${p.name}</span><span class="sinfo ${sc}">${st}</span><button class="restock-btn" onclick="restockItem('${p.name}')">&#8635; Restock to 2</button></div>`;});
   document.getElementById("stockList").innerHTML=html;
 }
-window.restockItem = async function(name){
-  await updateDoc(doc(db,"stock",name),{qty:2});
-  renderAdminPanel();
-}
-window.restockAll = async function(){
-  if(!confirm("Restock ALL items to 2?"))return;
-  for(const p of ALL_PRODUCTS){await updateDoc(doc(db,"stock",p.name),{qty:2});}
-  renderAdminPanel();
-  alert("All items restocked!");
-}
-
-window.addEventListener("DOMContentLoaded",async()=>{
-  await initStock();
-  listenToStock();
-  renderNav();
-});
+window.restockItem=async function(name){await updateDoc(doc(db,"stock",name),{qty:2});renderAdminPanel();}
+window.restockAll=async function(){if(!confirm("Restock ALL items to 2?"))return;for(const p of ALL_PRODUCTS){await updateDoc(doc(db,"stock",p.name),{qty:2});}renderAdminPanel();alert("All items restocked!");}
+window.addEventListener("DOMContentLoaded",async()=>{await initStock();listenToStock();renderNav();});
 </script>
 <style>
-*{box-sizing:border-box;}
-body{margin:0;font-family:Poppins;background:#fff;}
-.hidden{display:none;}
+*{box-sizing:border-box;}body{margin:0;font-family:Poppins;background:#fff;}.hidden{display:none;}
 .nav{display:flex;justify-content:space-between;align-items:center;padding:20px 50px;border-bottom:1px solid #f0e8d0;position:sticky;top:0;background:#fff;z-index:100;}
 .logo{font-family:'Playfair Display';font-size:26px;color:#D4AF37;cursor:pointer;}
 .nav-links{display:flex;align-items:center;gap:4px;flex-wrap:wrap;}
 .nav-links a{padding:6px 12px;cursor:pointer;text-decoration:none;color:#333;font-size:14px;border-radius:20px;transition:0.2s;}
 .nav-links a:hover{background:#fffdf5;color:#D4AF37;}
 .nav-avatar{width:32px;height:32px;border-radius:50%;background:#D4AF37;color:#fff;font-size:13px;font-weight:600;display:flex;align-items:center;justify-content:center;cursor:pointer;border:none;font-family:Poppins;}
+.coupon-banner{background:linear-gradient(135deg,#1a1a1a,#2d2200);color:#D4AF37;text-align:center;padding:10px;font-size:13px;letter-spacing:1px;}
+.coupon-banner span{background:#D4AF37;color:#000;padding:2px 10px;border-radius:20px;font-weight:700;margin:0 6px;}
 .hero{display:flex;justify-content:center;align-items:center;gap:40px;padding:40px;}
 .shimmer-text{background:linear-gradient(90deg,#b8860b 0%,#FFD700 40%,#fff8dc 60%,#b8860b 100%);background-size:200% auto;-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;animation:shimmer 3s linear infinite;font-family:'Playfair Display';font-size:42px;margin:0;}
 @keyframes shimmer{0%{background-position:200% center;}100%{background-position:-200% center;}}
-.coupon-banner{background:linear-gradient(135deg,#1a1a1a,#2d2200);color:#D4AF37;text-align:center;padding:10px;font-size:13px;letter-spacing:1px;}
-.coupon-banner span{background:#D4AF37;color:#000;padding:2px 10px;border-radius:20px;font-weight:700;margin:0 6px;}
 .grid{display:grid;grid-template-columns:repeat(4,1fr);gap:30px;padding:50px 100px;}
 .card{border:1px solid #eee;padding:15px;text-align:center;transition:0.3s;position:relative;cursor:pointer;}
 .card img{width:100%;aspect-ratio:1/1;object-fit:cover;}
@@ -779,8 +529,7 @@ body{margin:0;font-family:Poppins;background:#fff;}
 .btn{padding:10px 20px;border:1px solid #D4AF37;background:none;color:#D4AF37;cursor:pointer;font-family:Poppins;font-size:14px;border-radius:6px;transition:0.2s;}
 .btn:hover{background:#D4AF37;color:#fff;}
 .btn-primary{padding:12px 28px;background:#D4AF37;color:#fff;border:none;border-radius:8px;font-family:Poppins;font-size:14px;cursor:pointer;transition:0.2s;}
-.btn-primary:hover{background:#c09b28;}
-.btn-primary:disabled{background:#ccc;cursor:not-allowed;}
+.btn-primary:hover{background:#c09b28;}.btn-primary:disabled{background:#ccc;cursor:not-allowed;}
 .btn-ghost{padding:8px 18px;background:none;border:1px solid #ddd;color:#555;border-radius:6px;font-family:Poppins;font-size:13px;cursor:pointer;transition:0.2s;}
 .btn-ghost:hover{border-color:#D4AF37;color:#D4AF37;}
 .center-box{max-width:600px;margin:50px auto;text-align:center;padding:0 20px;}
@@ -793,8 +542,7 @@ body{margin:0;font-family:Poppins;background:#fff;}
 .btn-sold{width:100%;padding:9px;background:#e74c3c;color:#fff;border:none;border-radius:6px;font-family:Poppins;font-size:13px;cursor:pointer;margin-top:6px;}
 .btn-sold:hover{background:#c0392b;}
 .detail-layout{display:grid;grid-template-columns:1fr 1fr;gap:40px;align-items:start;}
-.detail-img-wrap{position:relative;}
-.detail-img-zoom{position:relative;border-radius:12px;overflow:hidden;border:1px solid #f0e8d0;}
+.detail-img-wrap{position:relative;}.detail-img-zoom{position:relative;border-radius:12px;overflow:hidden;border:1px solid #f0e8d0;}
 .detail-img-zoom img{width:100%;aspect-ratio:1/1;object-fit:cover;cursor:zoom-in;display:block;transition:0.3s;}
 .detail-img-zoom img:hover{transform:scale(1.02);}
 .zoom-hint{position:absolute;bottom:10px;right:10px;background:rgba(0,0,0,0.5);color:#fff;font-size:11px;padding:4px 8px;border-radius:20px;}
@@ -814,8 +562,7 @@ body{margin:0;font-family:Poppins;background:#fff;}
 .auth-field input{width:100%;padding:12px 14px;border:1.5px solid #eee;border-radius:8px;font-family:Poppins;font-size:14px;transition:0.2s;background:#fafafa;}
 .auth-field input:focus{outline:none;border-color:#D4AF37;background:#fff;}
 .auth-submit{width:100%;padding:14px;background:#D4AF37;color:#fff;border:none;border-radius:10px;font-family:Poppins;font-size:15px;font-weight:500;cursor:pointer;transition:0.2s;margin-top:4px;}
-.auth-submit:hover{background:#c09b28;}
-.auth-submit:disabled{background:#ccc;cursor:not-allowed;}
+.auth-submit:hover{background:#c09b28;}.auth-submit:disabled{background:#ccc;cursor:not-allowed;}
 .auth-close{position:absolute;top:14px;right:16px;background:rgba(255,255,255,0.3);border:none;color:#fff;width:28px;height:28px;border-radius:50%;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;}
 .auth-msg{padding:10px;border-radius:6px;font-size:13px;text-align:center;margin-top:12px;display:none;}
 .auth-msg.error{background:#fdecea;color:#c0392b;display:block;}
@@ -862,8 +609,7 @@ body{margin:0;font-family:Poppins;background:#fff;}
 .url-divider{display:flex;align-items:center;gap:10px;margin:12px 0;font-size:12px;color:#aaa;}
 .url-divider::before,.url-divider::after{content:'';flex:1;height:1px;background:#eee;}
 .submit-btn{width:100%;padding:13px;background:#D4AF37;color:#fff;border:none;border-radius:8px;font-family:Poppins;font-size:15px;cursor:pointer;margin-top:20px;transition:0.2s;}
-.submit-btn:hover{background:#c09b28;}
-.submit-btn:disabled{background:#ccc;cursor:not-allowed;}
+.submit-btn:hover{background:#c09b28;}.submit-btn:disabled{background:#ccc;cursor:not-allowed;}
 .close-btn{position:absolute;top:14px;right:16px;font-size:20px;cursor:pointer;color:#aaa;background:none;border:none;line-height:1;}
 .status-msg{margin-top:12px;padding:10px;border-radius:6px;font-size:13px;text-align:center;display:none;}
 .status-msg.success{background:#e8f9ee;color:#1a7a3a;display:block;}
@@ -883,9 +629,7 @@ body{margin:0;font-family:Poppins;background:#fff;}
 .stock-row{display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid #f0e8d0;gap:10px;flex-wrap:wrap;}
 .stock-row .sname{font-size:14px;color:#333;flex:1;min-width:160px;}
 .sinfo{font-size:13px;min-width:90px;}
-.sinfo.sold{color:#e74c3c;font-weight:600;}
-.sinfo.low{color:#e67e22;font-weight:600;}
-.sinfo.ok{color:#27ae60;font-weight:600;}
+.sinfo.sold{color:#e74c3c;font-weight:600;}.sinfo.low{color:#e67e22;font-weight:600;}.sinfo.ok{color:#27ae60;font-weight:600;}
 .restock-btn{padding:7px 16px;background:none;border:1px solid #27ae60;color:#27ae60;border-radius:20px;font-family:Poppins;font-size:12px;cursor:pointer;}
 .restock-btn:hover{background:#27ae60;color:#fff;}
 .admin-login-box{max-width:380px;margin:60px auto;text-align:center;padding:0 20px;}
@@ -904,69 +648,39 @@ body{margin:0;font-family:Poppins;background:#fff;}
 .cat-card:hover{border:2px solid #D4AF37!important;box-shadow:0 0 0 4px rgba(212,175,55,0.15),0 4px 20px rgba(212,175,55,0.25)!important;transform:scale(1.04)!important;}
 .cat-card:hover p{color:#D4AF37;font-weight:600;}
 @media(max-width:768px){
-  .nav{padding:15px 20px;flex-wrap:wrap;gap:10px;}
-  .nav-links a{font-size:12px;padding:5px 8px;}
-  .logo{font-size:20px;}
-  .hero{flex-direction:column;text-align:center;padding:20px 15px;gap:20px;}
-  .hero img{width:220px!important;}
-  .shimmer-text{font-size:28px!important;}
+  .nav{padding:15px 20px;flex-wrap:wrap;gap:10px;}.nav-links a{font-size:12px;padding:5px 8px;}.logo{font-size:20px;}
+  .hero{flex-direction:column;text-align:center;padding:20px 15px;gap:20px;}.hero img{width:220px!important;}.shimmer-text{font-size:28px!important;}
   .grid{grid-template-columns:repeat(2,1fr)!important;gap:15px!important;padding:20px 15px!important;}
-  .trust-bar{gap:15px;padding:20px 15px;}
-  .trust-badge{width:45%;}
-  .center-box{margin:20px auto;padding:0 15px;}
-  .cart-item{flex-wrap:wrap;gap:8px;}
-  .popup-box{padding:25px 15px;margin:10px;}
-  .auth-box{margin:10px;} .auth-body{padding:20px;}
-  .profile-wrap{margin:20px auto;padding:0 15px;}
-  .pgrid2{grid-template-columns:1fr;}
-  .admin-panel{margin:15px;padding:20px 15px;}
-  .stock-row{flex-direction:column;align-items:flex-start;}
-  .detail-layout{grid-template-columns:1fr;}
-  h1{font-size:24px;}h2{font-size:20px;}
+  .trust-bar{gap:15px;padding:20px 15px;}.trust-badge{width:45%;}
+  .center-box{margin:20px auto;padding:0 15px;}.cart-item{flex-wrap:wrap;gap:8px;}
+  .popup-box{padding:25px 15px;margin:10px;}.auth-box{margin:10px;}.auth-body{padding:20px;}
+  .profile-wrap{margin:20px auto;padding:0 15px;}.pgrid2{grid-template-columns:1fr;}
+  .admin-panel{margin:15px;padding:20px 15px;}.stock-row{flex-direction:column;align-items:flex-start;}
+  .detail-layout{grid-template-columns:1fr;}h1{font-size:24px;}h2{font-size:20px;}
 }
-@media(max-width:400px){
-  .grid{grid-template-columns:repeat(2,1fr)!important;gap:10px!important;padding:15px 10px!important;}
-  .hero img{width:180px!important;} .shimmer-text{font-size:24px!important;}
-  .trust-badge{width:100%;}
-}
-@media(min-width:769px)and(max-width:1024px){
-  .grid{grid-template-columns:repeat(3,1fr)!important;padding:30px 40px!important;}
-  .hero img{width:300px!important;}
-  .detail-layout{gap:24px;}
-}
+@media(max-width:400px){.grid{grid-template-columns:repeat(2,1fr)!important;gap:10px!important;padding:15px 10px!important;}.hero img{width:180px!important;}.shimmer-text{font-size:24px!important;}.trust-badge{width:100%;}}
+@media(min-width:769px)and(max-width:1024px){.grid{grid-template-columns:repeat(3,1fr)!important;padding:30px 40px!important;}.hero img{width:300px!important;}.detail-layout{gap:24px;}}
 </style>
 </head>
 <body>
-<div class="coupon-banner">🎉 Use code <span>WELCOME10</span> at checkout for 10% OFF your order!</div>
-<div class="nav">
-  <div class="logo" onclick="showPage('home')">AH COLLECTIONS</div>
-  <div class="nav-links" id="navRight"></div>
-</div>
+<div class="coupon-banner">🎉 Use code <span>WELCOME10</span> for 10% OFF! &nbsp;|&nbsp; 🚚 Free delivery on orders above ₹999</div>
+<div class="nav"><div class="logo" onclick="showPage('home')">AH COLLECTIONS</div><div class="nav-links" id="navRight"></div></div>
 <div id="home">
-  <div class="hero">
-    <img src="logo1.png" style="width:400px;">
-    <div>
-      <h1 class="shimmer-text">Shop Your Favourites</h1>
-      <p>Elegant &amp; timeless pieces</p>
-      <button class="btn-primary" onclick="showPage('shop')">Shop Now</button>
-    </div>
-  </div>
-  <div class="marquee-wrap">
-    <div class="marquee-track">
-      <span>&#10022; AH COLLECTIONS</span><span class="dot">&#9670;</span>
-      <span>HANDCRAFTED JEWELLERY</span><span class="dot">&#9670;</span>
-      <span>ELEGANT &amp; TIMELESS</span><span class="dot">&#9670;</span>
-      <span>FREE DELIVERY ABOVE &#8377;999</span><span class="dot">&#9670;</span>
-      <span>USE CODE WELCOME10 FOR 10% OFF</span><span class="dot">&#9670;</span>
-      <span>&#10022; AH COLLECTIONS</span><span class="dot">&#9670;</span>
-      <span>HANDCRAFTED JEWELLERY</span><span class="dot">&#9670;</span>
-      <span>ELEGANT &amp; TIMELESS</span><span class="dot">&#9670;</span>
-      <span>FREE DELIVERY ABOVE &#8377;999</span><span class="dot">&#9670;</span>
-      <span>USE CODE WELCOME10 FOR 10% OFF</span><span class="dot">&#9670;</span>
-    </div>
-  </div>
+  <div class="hero"><img src="logo1.png" style="width:400px;"><div><h1 class="shimmer-text">Shop Your Favourites</h1><p>Elegant &amp; timeless pieces</p><button class="btn-primary" onclick="showPage('shop')">Shop Now</button></div></div>
+  <div class="marquee-wrap"><div class="marquee-track">
+    <span>&#10022; AH COLLECTIONS</span><span class="dot">&#9670;</span>
+    <span>USE CODE WELCOME10 FOR 10% OFF</span><span class="dot">&#9670;</span>
+    <span>FREE DELIVERY ABOVE &#8377;999</span><span class="dot">&#9670;</span>
+    <span>HANDCRAFTED JEWELLERY</span><span class="dot">&#9670;</span>
+    <span>SECURE RAZORPAY PAYMENTS</span><span class="dot">&#9670;</span>
+    <span>&#10022; AH COLLECTIONS</span><span class="dot">&#9670;</span>
+    <span>USE CODE WELCOME10 FOR 10% OFF</span><span class="dot">&#9670;</span>
+    <span>FREE DELIVERY ABOVE &#8377;999</span><span class="dot">&#9670;</span>
+    <span>HANDCRAFTED JEWELLERY</span><span class="dot">&#9670;</span>
+    <span>SECURE RAZORPAY PAYMENTS</span><span class="dot">&#9670;</span>
+  </div></div>
   <div class="trust-bar">
-    <div class="trust-badge"><div class="icon">&#128666;</div><div><strong>Free Delivery</strong><span>On orders above &#8377;999</span></div></div>
+    <div class="trust-badge"><div class="icon">&#128666;</div><div><strong>Free Delivery</strong><span>On orders above ₹999</span></div></div>
     <div class="trust-badge"><div class="icon">&#128274;</div><div><strong>Secure Payment</strong><span>Razorpay — UPI, Cards, Net Banking</span></div></div>
     <div class="trust-badge"><div class="icon">&#9995;</div><div><strong>Handcrafted</strong><span>Unique artisan pieces</span></div></div>
     <div class="trust-badge"><div class="icon">&#127381;</div><div><strong>10% Off</strong><span>Use code WELCOME10</span></div></div>
@@ -991,32 +705,24 @@ body{margin:0;font-family:Poppins;background:#fff;}
 </div>
 <div id="products" class="hidden"></div>
 <div id="productDetail" class="hidden"></div>
-<div id="cartPage" class="hidden">
-  <div class="center-box">
-    <button class="btn-ghost" onclick="showPage('shop')" style="margin-bottom:16px;">&#8592; Back</button>
-    <h2 style="font-family:'Playfair Display';">Your Cart</h2>
-    <div id="cartItems"></div>
-  </div>
-</div>
+<div id="cartPage" class="hidden"><div class="center-box"><button class="btn-ghost" onclick="showPage('shop')" style="margin-bottom:16px;">&#8592; Back</button><h2 style="font-family:'Playfair Display';">Your Cart</h2><div id="cartItems"></div></div></div>
 <div id="checkout" class="hidden">
   <div class="center-box">
     <button class="btn-ghost" onclick="showCart()" style="margin-bottom:16px;">&#8592; Back</button>
     <h2 style="font-family:'Playfair Display';">Delivery Details</h2>
-    <p style="font-size:13px;color:#aaa;margin:-8px 0 16px;">Saved address auto-fills below if you're logged in.</p>
+    <p style="font-size:13px;color:#aaa;margin:-8px 0 16px;">Delivery charge updates automatically based on your city.</p>
     <div id="checkoutSummary"></div>
     <input id="co-name" class="fi" placeholder="Full Name">
     <input id="co-phone" class="fi" type="tel" placeholder="Phone Number (10 digits)" maxlength="10" oninput="this.value=this.value.replace(/\D/g,'')">
     <input id="co-address" class="fi" placeholder="Address">
-    <input id="co-city" class="fi" placeholder="City">
-    <input id="co-pincode" class="fi" type="tel" placeholder="Pincode" maxlength="6" oninput="this.value=this.value.replace(/\D/g,'')">
+    <input id="co-city" class="fi" placeholder="City" oninput="updateDeliveryPreview()">
+    <input id="co-pincode" class="fi" type="tel" placeholder="Pincode" maxlength="6" oninput="this.value=this.value.replace(/\D/g,'');updateDeliveryPreview()">
     <br>
     <button id="payBtn" class="btn-primary" onclick="proceedToPayment()" style="margin-top:15px;width:100%;font-size:16px;padding:16px;">&#128274; Pay Securely with Razorpay</button>
     <p style="font-size:12px;color:#aaa;margin-top:10px;text-align:center;">UPI • Cards • Net Banking • Wallets — all supported</p>
   </div>
 </div>
-<div id="successPage" class="hidden">
-  <div class="center-box"><div id="successMsg"></div></div>
-</div>
+<div id="successPage" class="hidden"><div class="center-box"><div id="successMsg"></div></div></div>
 <div id="profilePage" class="hidden"></div>
 <div id="adminLogin" class="hidden">
   <div class="admin-login-box">
@@ -1042,10 +748,7 @@ body{margin:0;font-family:Poppins;background:#fff;}
     <button class="auth-close" onclick="closeAuth()">&#10005;</button>
     <div class="auth-header"><h2>AH Collections</h2><p>Your personal jewellery account</p></div>
     <div class="auth-body">
-      <div class="auth-tabs">
-        <button id="tabLogin" class="auth-tab active" onclick="switchAuthTab('login')">Login</button>
-        <button id="tabSignup" class="auth-tab" onclick="switchAuthTab('signup')">Sign Up</button>
-      </div>
+      <div class="auth-tabs"><button id="tabLogin" class="auth-tab active" onclick="switchAuthTab('login')">Login</button><button id="tabSignup" class="auth-tab" onclick="switchAuthTab('signup')">Sign Up</button></div>
       <div id="loginForm">
         <div class="auth-field"><label>Email</label><input id="liEmail" type="email" placeholder="you@email.com" onkeydown="if(event.key==='Enter')submitLogin()"></div>
         <div class="auth-field"><label>Password</label><input id="liPw" type="password" placeholder="Your password" onkeydown="if(event.key==='Enter')submitLogin()"></div>
@@ -1064,27 +767,12 @@ body{margin:0;font-family:Poppins;background:#fff;}
 <div id="customizePopup" class="popup-overlay">
   <div class="popup-box">
     <button class="close-btn" onclick="closeCustomize()">&#10005;</button>
-    <h2>&#10024; Customize Your Bangles</h2>
-    <p class="subtitle">Fill in your details and we'll craft it just for you</p>
+    <h2>&#10024; Customize Your Bangles</h2><p class="subtitle">Fill in your details and we'll craft it just for you</p>
     <div class="form-group"><label>Your Name</label><input id="cName" type="text" placeholder="e.g. Anitha"></div>
     <div class="form-group"><label>Phone Number</label><input id="cPhone" type="tel" placeholder="e.g. 9876543210" maxlength="10" oninput="this.value=this.value.replace(/\D/g,'')"></div>
-    <div class="form-group">
-      <label>Preferred Colour</label>
-      <div class="colour-options">
-        <div class="colour-chip" onclick="selectColour(this,'Gold')">Gold</div>
-        <div class="colour-chip" onclick="selectColour(this,'Silver')">Silver</div>
-        <div class="colour-chip" onclick="selectColour(this,'Rose Gold')">Rose Gold</div>
-        <div class="colour-chip" onclick="selectColour(this,'Antique')">Antique</div>
-        <div class="colour-chip" onclick="selectColour(this,'Multi-colour')">Multi-colour</div>
-        <div class="colour-chip" onclick="selectColour(this,'Other')">Other</div>
-      </div>
-    </div>
+    <div class="form-group"><label>Preferred Colour</label><div class="colour-options"><div class="colour-chip" onclick="selectColour(this,'Gold')">Gold</div><div class="colour-chip" onclick="selectColour(this,'Silver')">Silver</div><div class="colour-chip" onclick="selectColour(this,'Rose Gold')">Rose Gold</div><div class="colour-chip" onclick="selectColour(this,'Antique')">Antique</div><div class="colour-chip" onclick="selectColour(this,'Multi-colour')">Multi-colour</div><div class="colour-chip" onclick="selectColour(this,'Other')">Other</div></div></div>
     <div class="form-group"><label>Specifications <span class="optional-tag">(optional)</span></label><textarea id="cSpecs" placeholder="e.g. Size 2.6, thin design, no stones..."></textarea></div>
-    <div class="form-group">
-      <label>Upload Design Image <span class="optional-tag">(optional)</span></label>
-      <div class="upload-area"><input type="file" accept="image/*" onchange="handleFileUpload(this)"><p>Click to upload from gallery</p><span>JPG, PNG, WEBP · Max 5MB</span></div>
-      <div id="uploadPreview" class="upload-preview"></div>
-    </div>
+    <div class="form-group"><label>Upload Design Image <span class="optional-tag">(optional)</span></label><div class="upload-area"><input type="file" accept="image/*" onchange="handleFileUpload(this)"><p>Click to upload from gallery</p><span>JPG, PNG, WEBP · Max 5MB</span></div><div id="uploadPreview" class="upload-preview"></div></div>
     <div class="url-divider">or paste image link from Google</div>
     <div class="form-group"><label>Design Image Link <span class="optional-tag">(optional)</span></label><input id="cImageUrl" type="url" placeholder="https://images.google.com/..."></div>
     <div id="statusMsg" class="status-msg"></div>
@@ -1102,8 +790,6 @@ body{margin:0;font-family:Poppins;background:#fff;}
     <div id="notifySuccessMsg" class="notify-success">&#10003; Saved! We will contact you when it's back.</div>
   </div>
 </div>
-<div id="zoomOverlay" class="zoom-overlay" onclick="closeZoom()">
-  <img id="zoomImg" src="" alt="Zoomed product">
-</div>
+<div id="zoomOverlay" class="zoom-overlay" onclick="closeZoom()"><img id="zoomImg" src="" alt="Zoomed product"></div>
 </body>
 </html>
