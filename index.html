@@ -367,24 +367,45 @@ window.showCart=function(){
   }else{
     const discount=calcDiscount(subtotal);
     const discountedSubtotal=subtotal-discount;
-    const delivery=discountedSubtotal>=FREE_DELIVERY_ABOVE?0:80;
-    const grandTotal=discountedSubtotal+delivery;
     const amountLeft=FREE_DELIVERY_ABOVE-discountedSubtotal;
     html+=`<div style="border-top:1px solid #f0e8d0;margin-top:10px;padding-top:16px;">
-      <div style="background:#fffdf5;border:1px solid #f0e8d0;border-radius:10px;padding:14px;margin-bottom:16px;font-size:13px;color:#555;">
-        <div style="display:flex;align-items:center;gap:8px;"><span style="font-size:18px;">&#128666;</span><span>Free delivery on orders above &#8377;999</span></div>
-        ${currentUser?`<div style="margin-top:8px;padding-top:8px;border-top:1px solid #f0e8d0;font-size:12px;color:#aaa;">&#128204; Want to save your delivery address? <span onclick="showPage('profilePage')" style="color:#D4AF37;cursor:pointer;font-weight:500;">Go to My Account →</span></div>`:''}
+      <div style="background:#fffdf5;border:1px solid #f0e8d0;border-radius:10px;overflow:hidden;margin-bottom:16px;font-size:13px;">
+        <div style="display:grid;grid-template-columns:1fr 1fr;background:#fff8e8;border-bottom:1px solid #f0e8d0;">
+          <div style="padding:8px 14px;font-size:11px;color:#aaa;text-transform:uppercase;letter-spacing:0.5px;font-weight:500;">Location</div>
+          <div style="padding:8px 14px;font-size:11px;color:#aaa;text-transform:uppercase;letter-spacing:0.5px;font-weight:500;">Delivery</div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;border-bottom:1px solid #f5eed8;">
+          <div style="padding:8px 14px;color:#555;">&#128205; Tanuku</div>
+          <div style="padding:8px 14px;color:#1a7a3a;font-weight:600;">&#127881; Free</div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;border-bottom:1px solid #f5eed8;">
+          <div style="padding:8px 14px;color:#555;">Andhra Pradesh</div>
+          <div style="padding:8px 14px;color:#e67e22;font-weight:600;">&#8377;50</div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;border-bottom:1px solid #f5eed8;">
+          <div style="padding:8px 14px;color:#555;">Rest of India</div>
+          <div style="padding:8px 14px;color:#e67e22;font-weight:600;">&#8377;80</div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;">
+          <div style="padding:8px 14px;color:#555;">Any order above &#8377;999</div>
+          <div style="padding:8px 14px;color:#1a7a3a;font-weight:600;">&#127881; Free</div>
+        </div>
       </div>
       <div style="background:#fffdf5;border:1px solid #f0e8d0;border-radius:10px;padding:14px;margin-bottom:16px;">
-        <div style="font-size:13px;font-weight:500;color:#555;margin-bottom:8px;">🎟️ Have a coupon code?</div>
+        <div style="font-size:13px;font-weight:500;color:#555;margin-bottom:8px;">&#127967; Have a coupon code?</div>
         <div style="display:flex;gap:8px;">
           <input id="couponInput" placeholder="Enter code e.g. WELCOME10" ${appliedCoupon?'disabled':''} value="${appliedCoupon?appliedCoupon.code:''}" style="flex:1;padding:10px 12px;border:1.5px solid #ddd;border-radius:8px;font-family:Poppins;font-size:13px;" onkeydown="if(event.key==='Enter')applyCoupon()">
-          <button id="applyBtn" onclick="applyCoupon()" ${appliedCoupon?'disabled':''} style="padding:10px 16px;background:#D4AF37;color:#fff;border:none;border-radius:8px;font-family:Poppins;font-size:13px;cursor:pointer;white-space:nowrap;">${appliedCoupon?'Applied ✓':'Apply'}</button>
+          <button id="applyBtn" onclick="applyCoupon()" ${appliedCoupon?'disabled':''} style="padding:10px 16px;background:#D4AF37;color:#fff;border:none;border-radius:8px;font-family:Poppins;font-size:13px;cursor:pointer;white-space:nowrap;">${appliedCoupon?'Applied &#10003;':'Apply'}</button>
           <button id="removeCouponBtn" onclick="removeCoupon()" style="display:${appliedCoupon?'inline-block':'none'};padding:10px 12px;background:none;border:1px solid #e74c3c;color:#e74c3c;border-radius:8px;font-family:Poppins;font-size:12px;cursor:pointer;">Remove</button>
         </div>
-        <div id="couponMsg" style="font-size:12px;margin-top:6px;color:${appliedCoupon?'#1a7a3a':'#e74c3c'};">${appliedCoupon?'✓ Coupon applied! '+appliedCoupon.label+' discount added.':''}</div>
+        <div id="couponMsg" style="font-size:12px;margin-top:6px;color:${appliedCoupon?'#1a7a3a':'#e74c3c'};">${appliedCoupon?'&#10003; Coupon applied! '+appliedCoupon.label+' discount added.':''}</div>
       </div>
-      <div id="cartTotalsSection">${buildTotalsHTML(subtotal,discount,delivery,grandTotal,amountLeft)}</div>
+      <div style="display:flex;justify-content:space-between;margin-bottom:8px;font-size:14px;color:#555;"><span>Subtotal</span><span>&#8377;${subtotal}</span></div>
+      ${discount>0?`<div style="display:flex;justify-content:space-between;margin-bottom:8px;font-size:14px;color:#1a7a3a;"><span>&#127967; Discount (${appliedCoupon.code})</span><span>-&#8377;${discount}</span></div>`:''}
+      ${discountedSubtotal>=FREE_DELIVERY_ABOVE?`<div style="font-size:13px;color:#1a7a3a;font-weight:500;margin-bottom:10px;">&#127881; Your order qualifies for FREE delivery!</div>`:(amountLeft>0?`<div style="background:#fff8e1;border:1px solid #f0e8d0;border-radius:8px;padding:8px 12px;margin-bottom:10px;font-size:12px;color:#b8860b;">&#128717; Add &#8377;${amountLeft} more for FREE delivery!</div>`:'')}
+      <div style="font-size:12px;color:#aaa;margin-bottom:14px;">&#128666; Exact delivery charge calculated at checkout based on your city</div>
+      <div style="display:flex;justify-content:space-between;margin-bottom:16px;font-size:17px;font-weight:600;border-top:1px solid #f0e8d0;padding-top:10px;"><span>Subtotal</span><span style="color:#D4AF37;">&#8377;${discountedSubtotal}</span></div>
+      <button class="btn-primary" onclick="goToCheckout(${discountedSubtotal},0,${discount})" style="width:100%;">Proceed to Checkout &#10145;</button>
     </div>`;
   }
   document.getElementById("cartItems").innerHTML=html;
