@@ -97,7 +97,7 @@ window.renderNav=function(){
   const nr=document.getElementById("navRight"); if(!nr) return;
   if(currentUser){
     const ini=(currentUser.displayName||currentUser.email||"U").charAt(0).toUpperCase();
-    nr.innerHTML=`<a onclick="showPage('home')">Home</a><a onclick="showPage('shop')">Shop</a><a onclick="showCart()">Cart &#128722; (<span id="cartCount">0</span>)</a><button class="nav-avatar" onclick="showPage('profilePage')" title="My Account">${ini}</button><a onclick="doLogout()" style="font-size:12px;color:#999;">Logout</a>`;
+    nr.innerHTML=`<a onclick="showPage('home')">Home</a><a onclick="showPage('shop')">Shop</a><a onclick="showCart()">Cart &#128722; (<span id="cartCount">0</span>)</a><a onclick="showPage('profilePage')" style="font-weight:500;">&#128100; My Account</a><a onclick="doLogout()" style="font-size:12px;color:#999;">Logout</a>`;
   } else {
     nr.innerHTML=`<a onclick="showPage('home')">Home</a><a onclick="showPage('shop')">Shop</a><a onclick="showCart()">Cart &#128722; (<span id="cartCount">0</span>)</a><a onclick="openAuth('login')" style="font-weight:500;">Login</a><a onclick="openAuth('signup')" style="background:#D4AF37;color:#fff;padding:7px 16px;border-radius:20px;font-size:13px;">Sign Up</a>`;
   }
@@ -373,6 +373,7 @@ window.showCart=function(){
     html+=`<div style="border-top:1px solid #f0e8d0;margin-top:10px;padding-top:16px;">
       <div style="background:#fffdf5;border:1px solid #f0e8d0;border-radius:10px;padding:14px;margin-bottom:16px;font-size:13px;color:#555;">
         <div style="display:flex;align-items:center;gap:8px;"><span style="font-size:18px;">&#128666;</span><span>Free delivery on orders above &#8377;999</span></div>
+        ${currentUser?`<div style="margin-top:8px;padding-top:8px;border-top:1px solid #f0e8d0;font-size:12px;color:#aaa;">&#128204; Want to save your delivery address? <span onclick="showPage('profilePage')" style="color:#D4AF37;cursor:pointer;font-weight:500;">Go to My Account →</span></div>`:''}
       </div>
       <div style="background:#fffdf5;border:1px solid #f0e8d0;border-radius:10px;padding:14px;margin-bottom:16px;">
         <div style="font-size:13px;font-weight:500;color:#555;margin-bottom:8px;">🎟️ Have a coupon code?</div>
@@ -403,6 +404,7 @@ window.goToCheckout=async function(grandTotal,delivery,discount){
       sv("co-name",a.fullname||u.name||"");sv("co-phone",a.phone||"");
       sv("co-address",a.address||"");sv("co-city",a.city||"");sv("co-pincode",a.pincode||"");
       if(a.city||a.pincode) updateDeliveryPreview();
+      if(a.fullname||a.address){const h=document.getElementById("checkoutAddressHint");if(h)h.style.display="block";}
     },100);
   }
   updateDeliveryPreview();
@@ -740,6 +742,7 @@ window.addEventListener("DOMContentLoaded",async()=>{await initStock();listenToS
     <button class="btn-ghost" onclick="showCart()" style="margin-bottom:16px;">&#8592; Back</button>
     <h2 style="font-family:'Playfair Display';">Delivery Details</h2>
     <p style="font-size:13px;color:#aaa;margin:-8px 0 16px;">Delivery charge updates automatically based on your city.</p>
+    <div id="checkoutAddressHint" style="background:#fffdf5;border:1px solid #f0e8d0;border-radius:10px;padding:12px 14px;margin-bottom:16px;font-size:13px;color:#888;display:none;">&#10003; Your saved address has been filled in. <span onclick="showPage('profilePage')" style="color:#D4AF37;cursor:pointer;">Edit address in My Account →</span></div>
     <div id="checkoutSummary"></div>
     <input id="co-name" class="fi" placeholder="Full Name">
     <input id="co-phone" class="fi" type="tel" placeholder="Phone Number (10 digits)" maxlength="10" oninput="this.value=this.value.replace(/\D/g,'')">
