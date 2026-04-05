@@ -696,9 +696,10 @@ window.addEventListener("DOMContentLoaded",async()=>{await initStock();listenToS
 .notify-submit:hover{background:#c09b28;}
 .notify-close{position:absolute;top:12px;right:16px;background:none;border:none;font-size:20px;cursor:pointer;color:#aaa;}
 .notify-success{background:#e8f9ee;color:#1a7a3a;border-radius:8px;padding:10px;font-size:13px;margin-top:10px;display:none;}
-.cat-card{transition:0.25s;cursor:pointer;}
-.cat-card:hover{border:2px solid #D4AF37!important;box-shadow:0 0 0 4px rgba(212,175,55,0.15),0 4px 20px rgba(212,175,55,0.25)!important;transform:scale(1.04)!important;}
-.cat-card:hover p{color:#D4AF37;font-weight:600;}
+.cat-card{transition:0.25s;}
+.cat-card.clickable{cursor:pointer;}
+.cat-card.clickable:hover{border:2px solid #D4AF37!important;box-shadow:0 0 0 4px rgba(212,175,55,0.15),0 4px 20px rgba(212,175,55,0.25)!important;transform:scale(1.04)!important;}
+.cat-card.clickable:hover p{color:#D4AF37;font-weight:600;}
 @media(max-width:768px){
   .nav{padding:15px 20px;flex-wrap:wrap;gap:10px;}.nav-links a{font-size:12px;padding:5px 8px;}.logo{font-size:20px;}
   .hero{flex-direction:column;text-align:center;padding:20px 15px;gap:20px;}.hero img{width:220px!important;}.shimmer-text{font-size:28px!important;}
@@ -739,20 +740,20 @@ window.addEventListener("DOMContentLoaded",async()=>{await initStock();listenToS
   </div>
   <h2 style="text-align:center;font-family:'Playfair Display';">Our Collections</h2>
   <div class="grid">
-    <div class="card cat-card" onclick="openCategory('Chains')"><img src="chaindisplay.jpeg"><p>Chains</p></div>
-    <div class="card cat-card" onclick="openCategory('Bracelets')"><img src="braceletdisplay.jpeg"><p>Bracelets</p></div>
-    <div class="card cat-card" onclick="openCategory('Earrings')"><img src="earringsdisplay.jpeg"><p>Earrings</p></div>
-    <div class="card cat-card" onclick="openCategory('Bangles')"><img src="banglesdisplay.jpeg"><p>Bangles</p></div>
+    <div class="card cat-card"><img src="chaindisplay.jpeg"><p>Chains</p></div>
+    <div class="card cat-card"><img src="braceletdisplay.jpeg"><p>Bracelets</p></div>
+    <div class="card cat-card"><img src="earringsdisplay.jpeg"><p>Earrings</p></div>
+    <div class="card cat-card"><img src="banglesdisplay.jpeg"><p>Bangles</p></div>
   </div>
 </div>
 <div id="shop" class="hidden">
   <button class="btn-ghost" onclick="showPage('home')" style="margin:20px;">&#8592; Back</button>
   <h2 style="text-align:center;font-family:'Playfair Display';">Collections</h2>
   <div class="grid">
-    <div class="card cat-card" onclick="openCategory('Chains')"><img src="chaindisplay.jpeg"><p>Chains</p></div>
-    <div class="card cat-card" onclick="openCategory('Bracelets')"><img src="braceletdisplay.jpeg"><p>Bracelets</p></div>
-    <div class="card cat-card" onclick="openCategory('Earrings')"><img src="earringsdisplay.jpeg"><p>Earrings</p></div>
-    <div class="card cat-card" onclick="openCategory('Bangles')"><img src="banglesdisplay.jpeg"><p>Bangles</p></div>
+    <div class="card cat-card clickable" onclick="openCategory('Chains')"><img src="chaindisplay.jpeg"><p>Chains</p></div>
+    <div class="card cat-card clickable" onclick="openCategory('Bracelets')"><img src="braceletdisplay.jpeg"><p>Bracelets</p></div>
+    <div class="card cat-card clickable" onclick="openCategory('Earrings')"><img src="earringsdisplay.jpeg"><p>Earrings</p></div>
+    <div class="card cat-card clickable" onclick="openCategory('Bangles')"><img src="banglesdisplay.jpeg"><p>Bangles</p></div>
   </div>
 </div>
 <div id="products" class="hidden"></div>
