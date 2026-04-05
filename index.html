@@ -32,14 +32,37 @@ const VERIFY_PAYMENT_URL = "https://verifypayment-qhvjtgjmaq-uc.a.run.app";
 const FREE_DELIVERY_ABOVE = 999;
 
 // ── DELIVERY BY LOCATION ──
-const TANUKU_PINCODES = ["534211","534212","534213","534214","534215","534216"];
-const AP_DISTRICTS = ["west godavari","eluru","krishna","guntur","prakasam","nellore","kurnool","kadapa","anantapur","chittoor","east godavari","rajamahendravaram","kakinada","vizianagaram","visakhapatnam","srikakulam","parvathipuram","alluri","anakapalli","konaseema","ntr","bapatla","palnadu","sri sathya sai","annamayya","tirupati","chittoor"];
+// Delivery logic defined below in getDeliveryCharge
+
+// Tanuku & surrounding pincodes — Free
+const TANUKU_PINCODES = ["534211","534212","534213","534214","534215","534216","534217","534218","534219","534220","534221","534222","534223","534224","534225","534226","534227","534228","534229","534230"];
+
+// West Godavari district pincodes (534001–534999 excluding Tanuku) — ₹50
+// Other AP districts — ₹60
+// Rest of India — ₹80
 
 function getDeliveryCharge(city, pincode) {
-  const c = (city||"").toLowerCase().trim();
-  const p = (pincode||"").trim();
-  if(TANUKU_PINCODES.includes(p)) return 0;
-  for(const d of AP_DISTRICTS){ if(c.includes(d)||d.includes(c)) return 50; }
+  const p = parseInt((pincode||"").trim(), 10);
+  if(isNaN(p) || pincode.trim().length < 6) return 80;
+
+  // Tanuku & surroundings — Free
+  if(TANUKU_PINCODES.includes(String(p))) return 0;
+
+  // West Godavari district pincodes (534001–534999) — ₹50
+  if(p >= 534001 && p <= 534999) return 50;
+
+  // Andhra Pradesh pincode ranges — ₹60
+  const AP_RANGES = [
+    [500000,500999],[501000,502999],[503000,503999],[504000,504999],
+    [505000,505999],[506000,506999],[507000,507999],[508000,508999],
+    [509000,509999],[510000,516999],[517000,517999],[518000,518999],
+    [519000,519999],[520000,521999],[522000,524999],[525000,525999],
+    [526000,526999],[527000,527999],[528000,528999],[530000,532999],
+    [533000,533999],[535000,535999]
+  ];
+  for(const [lo,hi] of AP_RANGES){ if(p>=lo && p<=hi) return 60; }
+
+  // Rest of India — ₹80
   return 80;
 }
 
