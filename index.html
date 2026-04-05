@@ -38,7 +38,7 @@ const AP_DISTRICTS = ["west godavari","eluru","krishna","guntur","prakasam","nel
 function getDeliveryCharge(city, pincode) {
   const c = (city||"").toLowerCase().trim();
   const p = (pincode||"").trim();
-  if(c === "tanuku" || TANUKU_PINCODES.includes(p)) return 0;
+  if(TANUKU_PINCODES.includes(p)) return 0;
   for(const d of AP_DISTRICTS){ if(c.includes(d)||d.includes(c)) return 50; }
   return 80;
 }
@@ -379,10 +379,9 @@ window.showCart=function(){
         <div id="couponMsg" style="font-size:12px;margin-top:6px;color:${appliedCoupon?'#1a7a3a':'#e74c3c'};">${appliedCoupon?'&#10003; Coupon applied! '+appliedCoupon.label+' discount added.':''}</div>
       </div>
       <div style="display:flex;justify-content:space-between;margin-bottom:8px;font-size:14px;color:#555;"><span>Subtotal</span><span>&#8377;${subtotal}</span></div>
-      ${discount>0?`<div style="display:flex;justify-content:space-between;margin-bottom:8px;font-size:14px;color:#1a7a3a;"><span>&#127967; Discount (${appliedCoupon.code})</span><span>-&#8377;${discount}</span></div>`:''}
+      ${discount>0?`<div style="display:flex;justify-content:space-between;margin-bottom:8px;font-size:14px;color:#1a7a3a;"><span>Discount (${appliedCoupon.code})</span><span>-&#8377;${discount}</span></div>`:''}
       ${discountedSubtotal>=FREE_DELIVERY_ABOVE?`<div style="font-size:13px;color:#1a7a3a;font-weight:500;margin-bottom:10px;">&#127881; Your order qualifies for FREE delivery!</div>`:(amountLeft>0?`<div style="background:#fff8e1;border:1px solid #f0e8d0;border-radius:8px;padding:8px 12px;margin-bottom:10px;font-size:12px;color:#b8860b;">&#128717; Add &#8377;${amountLeft} more for FREE delivery!</div>`:'')}
-      <div style="font-size:12px;color:#aaa;margin-bottom:14px;">&#128666; Exact delivery charge calculated at checkout based on your city</div>
-      <div style="display:flex;justify-content:space-between;margin-bottom:16px;font-size:17px;font-weight:600;border-top:1px solid #f0e8d0;padding-top:10px;"><span>Subtotal</span><span style="color:#D4AF37;">&#8377;${discountedSubtotal}</span></div>
+      <div style="display:flex;justify-content:space-between;margin-bottom:16px;font-size:17px;font-weight:600;border-top:1px solid #f0e8d0;padding-top:10px;"><span>Total</span><span style="color:#D4AF37;">&#8377;${discountedSubtotal}</span></div>
       <button class="btn-primary" onclick="goToCheckout(${discountedSubtotal},0,${discount})" style="width:100%;">Proceed to Checkout &#10145;</button>
     </div>`;
   }
