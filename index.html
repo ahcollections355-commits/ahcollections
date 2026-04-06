@@ -359,14 +359,17 @@ function getDeliveryLabel(charge){
 }
 
 function refreshCartTotals(){
+  const el=document.getElementById("cartTotalsSection");if(!el)return;
   const subtotal=cart.reduce((s,i)=>s+(i.price*i.qty),0);
   const discount=calcDiscount(subtotal);
   const discountedSubtotal=subtotal-discount;
-  const city=window._lastCity||"";const pincode=window._lastPincode||"";
-  const delivery=discountedSubtotal>=FREE_DELIVERY_ABOVE?0:getDeliveryCharge(city,pincode);
-  const grandTotal=discountedSubtotal+delivery;
   const amountLeft=FREE_DELIVERY_ABOVE-discountedSubtotal;
-  document.getElementById("cartTotalsSection").innerHTML=buildTotalsHTML(subtotal,discount,delivery,grandTotal,amountLeft);
+  el.innerHTML=`
+    <div style="display:flex;justify-content:space-between;margin-bottom:8px;font-size:14px;color:#555;"><span>Subtotal</span><span>&#8377;${subtotal}</span></div>
+    ${discount>0?`<div style="display:flex;justify-content:space-between;margin-bottom:8px;font-size:14px;color:#1a7a3a;"><span>Discount (${appliedCoupon.code})</span><span>-&#8377;${discount}</span></div>`:''}
+    ${discountedSubtotal>=FREE_DELIVERY_ABOVE?`<div style="font-size:13px;color:#1a7a3a;font-weight:500;margin-bottom:10px;">&#127881; Your order qualifies for FREE delivery!</div>`:(amountLeft>0?`<div style="background:#fff8e1;border:1px solid #f0e8d0;border-radius:8px;padding:8px 12px;margin-bottom:10px;font-size:12px;color:#b8860b;">&#128717; Add &#8377;${amountLeft} more for FREE delivery!</div>`:'')}
+    <div style="display:flex;justify-content:space-between;margin-bottom:16px;font-size:17px;font-weight:600;border-top:1px solid #f0e8d0;padding-top:10px;"><span>Total</span><span style="color:#D4AF37;">&#8377;${discountedSubtotal}</span></div>
+    <button class="btn-primary" onclick="goToCheckout(${discountedSubtotal},0,${discount})" style="width:100%;">Proceed to Checkout &#10145;</button>`;
 }
 
 function buildTotalsHTML(subtotal,discount,delivery,grandTotal,amountLeft){
@@ -401,14 +404,11 @@ window.showCart=function(){
         </div>
         <div id="couponMsg" style="font-size:12px;margin-top:6px;color:${appliedCoupon?'#1a7a3a':'#e74c3c'};">${appliedCoupon?'&#10003; Coupon applied! '+appliedCoupon.label+' discount added.':''}</div>
       </div>
-      <div style="display:flex;justify-content:space-between;margin-bottom:8px;font-size:14px;color:#555;"><span>Subtotal</span><span>&#8377;${subtotal}</span></div>
-      ${discount>0?`<div style="display:flex;justify-content:space-between;margin-bottom:8px;font-size:14px;color:#1a7a3a;"><span>Discount (${appliedCoupon.code})</span><span>-&#8377;${discount}</span></div>`:''}
-      ${discountedSubtotal>=FREE_DELIVERY_ABOVE?`<div style="font-size:13px;color:#1a7a3a;font-weight:500;margin-bottom:10px;">&#127881; Your order qualifies for FREE delivery!</div>`:(amountLeft>0?`<div style="background:#fff8e1;border:1px solid #f0e8d0;border-radius:8px;padding:8px 12px;margin-bottom:10px;font-size:12px;color:#b8860b;">&#128717; Add &#8377;${amountLeft} more for FREE delivery!</div>`:'')}
-      <div style="display:flex;justify-content:space-between;margin-bottom:16px;font-size:17px;font-weight:600;border-top:1px solid #f0e8d0;padding-top:10px;"><span>Total</span><span style="color:#D4AF37;">&#8377;${discountedSubtotal}</span></div>
-      <button class="btn-primary" onclick="goToCheckout(${discountedSubtotal},0,${discount})" style="width:100%;">Proceed to Checkout &#10145;</button>
+      <div id="cartTotalsSection"></div>
     </div>`;
   }
   document.getElementById("cartItems").innerHTML=html;
+  if(cart.length>0) refreshCartTotals();
   showPage("cartPage");
 }
 window.increaseQty=function(i){const item=cart[i];const maxStock=stockData[item.name]!==undefined?stockData[item.name]:2;if(item.qty>=maxStock){alert("Only "+maxStock+" piece(s) available.");return;}cart[i].qty++;showCart();updateCart();}
